@@ -1,0 +1,299 @@
+# =============================================================================
+# SKILLBRIDGE .gitignore - Comprehensive Python + Next.js Project
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Python - Bytecode & Cache
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+.venv
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# -----------------------------------------------------------------------------
+# FastAPI / Uvicorn
+# -----------------------------------------------------------------------------
+*.log
+logs/
+temp/
+tmp/
+
+# -----------------------------------------------------------------------------
+# Data Files (DO NOT COMMIT SENSITIVE DATA)
+# -----------------------------------------------------------------------------
+data/knowledge_graph.json
+data/pending_review.json
+data/*.json
+!data/skills_library.json
+!data/sample_knowledge_graph.json
+
+# -----------------------------------------------------------------------------
+# Node.js / npm (Frontend)
+# -----------------------------------------------------------------------------
+# dependencies
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+
+# testing
+frontend/coverage/
+
+# next.js
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# production
+frontend/.production
+
+# misc
+frontend/.DS_Store
+frontend/*.pem
+
+# debug
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# local env files
+frontend/.env*.local
+frontend/.env
+
+# Vercel
+frontend/.vercel
+
+# TypeScript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# -----------------------------------------------------------------------------
+# IDE & Editor
+# -----------------------------------------------------------------------------
+# JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+Session.vim
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# -----------------------------------------------------------------------------
+# OS Files
+# -----------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+~
+.Trash-*
+.nfs*
+
+# -----------------------------------------------------------------------------
+# API Keys & Secrets (NEVER COMMIT)
+# -----------------------------------------------------------------------------
+*.key
+*.pem
+*.crt
+*.csr
+*.p12
+*.pfx
+credentials.json
+secrets.json
+*.secret
+*.token
+.env.local
+.env.*.local
+.env.production
+
+# Common secret file names
+secrets.yaml
+secrets.yml
+config-secrets.json
+api_keys.json
+credentials.json
+service-account.json
+
+# -----------------------------------------------------------------------------
+# API Documentation (Generated)
+# -----------------------------------------------------------------------------
+docs/_build/
+site/
+
+# OpenAPI Specs
+openapi.json
+openapi.yaml
+api-spec.json
+
+# -----------------------------------------------------------------------------
+# Jupyter Notebook
+# -----------------------------------------------------------------------------
+.ipynb_checkpoints
+*.ipynb
+.ipynb
+
+# -----------------------------------------------------------------------------
+# Celery / Task Queue
+# -----------------------------------------------------------------------------
+celerybeat-schedule
+celerybeat.pid
+
+# -----------------------------------------------------------------------------
+# Database (if using SQLite locally)
+# -----------------------------------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# -----------------------------------------------------------------------------
+# Graph Database Dumps (Neo4j if used)
+# -----------------------------------------------------------------------------
+*.neo4j
+*.dump
+*.import
+
+# -----------------------------------------------------------------------------
+# Temporary Files
+# -----------------------------------------------------------------------------
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*.log
+*.cache
+
+# -----------------------------------------------------------------------------
+# Docker
+# -----------------------------------------------------------------------------
+.dockerignore
+
+# Docker volumes (sensitive)
+docker-data/
+
+# -----------------------------------------------------------------------------
+# Terraform (if used)
+# -----------------------------------------------------------------------------
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# -----------------------------------------------------------------------------
+# Misc
+# -----------------------------------------------------------------------------
+*.pid
+*.seed
+*.pid.lock
+
+# Package manager logs
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Ruff
+.ruff_cache/
+
+# profiling
+*.prof
