@@ -1,4 +1,3 @@
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -29,14 +28,14 @@ async def root():
     return {
         "message": "Skill-Bridge Navigator API",
         "version": settings.VERSION,
-        "groq_configured": bool(os.getenv("GROQ_API_KEY"))
+        "groq_configured": bool(settings.GROQ_API_KEY)
     }
 
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
-        "groq_api": "configured" if os.getenv("GROQ_API_KEY") else "not_configured"
+        "groq_api": "configured" if settings.GROQ_API_KEY else "not_configured"
     }
 
 
@@ -44,7 +43,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "main:app",  # change "main" to your filename if different
+        "app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True

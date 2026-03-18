@@ -1,8 +1,8 @@
 import json
 from typing import Optional
 from langchain_groq import ChatGroq
-from langchain.prompts import PromptTemplate
-from langchain.output_parsers import JsonOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 from app.models.graph import ExtractionResult, Node, Link
 
@@ -30,7 +30,7 @@ Return ONLY valid JSON in this exact format:
 {{
   "nodes": [
     {{"id": "skill_id", "type": "skill", "category": "programming|frontend|backend|devops|cloud|database|ai|tools"}},
-    {{"id": "role_id", "type": "role", "category": null}}
+    }
   ],
   "links": [
     {{"source": "role_id", "target": "skill_id", "type": "REQUIRES"}}

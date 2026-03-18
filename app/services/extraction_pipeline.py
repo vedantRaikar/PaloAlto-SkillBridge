@@ -19,7 +19,7 @@ class ExtractionPipeline:
         self.tiers_attempted = []
         role_id = self._normalize_id(title)
 
-        result = await self._tier1_llm(title, description)
+        result = self._tier1_llm(title, description)
         if result.success and result.nodes:
             return self._build_response(result, "llm", False)
 
@@ -97,4 +97,11 @@ class ExtractionPipeline:
 
     def extract_sync(self, title: str, description: str) -> dict:
         import asyncio
-        return asyncio.run(self.extract(title, description))
+        import concurrent.futures
+        try:
+            loop = asyncio.get_running_loop()
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(asyncio.run, self.extract(title, description))
+                return future.result()
+        except RuntimeError:
+            return asyncio.run(self.extract(title, description))

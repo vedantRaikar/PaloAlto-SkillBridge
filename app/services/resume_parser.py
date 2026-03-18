@@ -120,7 +120,13 @@ class ResumeParser:
         phone_pattern = r'(\+?1?\s*[-.]?\s*)?(\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}'
         phones = re.findall(phone_pattern, text)
         if phones:
-            contact["phone"] = ''.join(filter(str.isdigit, phones[0][0] + phones[0][1] + phones[0][2]))
+            parts = phones[0]
+            phone_str = ''
+            for part in parts:
+                if part:
+                    phone_str += ''.join(filter(str.isdigit, part))
+            if phone_str:
+                contact["phone"] = phone_str
         
         linkedin_pattern = r'linkedin\.com/in/([a-zA-Z0-9-]+)'
         linkedin = re.findall(linkedin_pattern, text, re.IGNORECASE)
