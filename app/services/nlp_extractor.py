@@ -3,7 +3,10 @@ import re
 from pathlib import Path
 from typing import Optional, Set
 from app.core.config import settings
+from app.core.logger import get_logger
 from app.models.graph import ExtractionResult, Node, Link
+
+logger = get_logger(__name__)
 
 class NLPExtractor:
     _spacy_model = None
@@ -30,7 +33,7 @@ class NLPExtractor:
                 import spacy
                 NLPExtractor._spacy_model = spacy.load("en_core_web_md")
             except OSError:
-                print("spaCy model 'en_core_web_md' not found. Run: python -m spacy download en_core_web_md")
+                logger.warning("spaCy model 'en_core_web_md' not found. Run: python -m spacy download en_core_web_md")
                 NLPExtractor._spacy_model = None
 
     def _extract_entities(self, text: str) -> Set[str]:

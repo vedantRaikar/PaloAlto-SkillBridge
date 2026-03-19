@@ -2,12 +2,15 @@ import json
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 from pathlib import Path
+from app.core.logger import get_logger
 from app.models.course import Course, CourseSearchRequest, CourseSearchResponse, CourseDiscoverRequest, CourseDiscoverResponse
 from app.models.certification import Certification, CertificationSearchRequest, CertificationSearchResponse
 from app.services.graph_manager import GraphManager
 from app.services.course_discovery import get_course_aggregator
 from app.services.cert_discovery import get_certification_service
 from app.models.graph import Node, Link, NodeType, LinkType
+
+logger = get_logger(__name__)
 
 class LearningResourceManager:
     def __init__(self):
@@ -73,7 +76,7 @@ class LearningResourceManager:
                     self._add_course_to_graph(course)
                 
             except Exception as e:
-                print(f"Error discovering courses for skill {skill}: {e}")
+                logger.exception("Error discovering courses for skill %s", skill)
                 courses_by_skill[skill] = []
         
         recommended_paths = self._generate_learning_paths(request.skills)
@@ -173,7 +176,7 @@ class LearningResourceManager:
             result = agg.search(skill_id, max_results=5)
             return result.courses
         except Exception as e:
-            print(f"Error searching courses for skill {skill_id}: {e}")
+            logger.exception("Error searching courses for skill %s", skill_id)
             return []
     
     def _add_course_to_graph(self, course: Course) -> str:

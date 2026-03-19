@@ -29,7 +29,7 @@ npm run dev
 - Test Commands:
 ```bash
 # Backend tests
-uv run pytest app\tests\ -q --tb=short
+uv run pytest app/tests -q --tb=short --cov=app
 
 # Frontend quality checks (no dedicated test script configured)
 cd frontend
@@ -39,13 +39,23 @@ npm run lint
 AI Disclosure:
 - Did you use an AI assistant (Copilot, ChatGPT, etc.)? (Yes/No)
 	- Yes (OpenCode / Github Copilot)
+
 - How did you verify the suggestions?
-	- Ran targeted and full backend test suites after each significant code change.
-	- Manually inspected changed modules and validated fallback behavior for dynamic recommendations.
-	- Confirmed no regressions by running `486` tests successfully.
+	- I ran focused tests after each change to validate the modified module behavior.
+  - I ran the full backend suite to ensure there were no regressions:
+    uv run pytest app/tests -q --tb=short --cov=app
+  - I confirmed key integration paths (course discovery, learning resources, and API startup) by running targeted   tests and checking pass/fail results.
+  - I manually reviewed changed files to ensure fallbacks, caching behavior, and error handling matched intended logic.
+  - I validated runtime behavior with a demo script for dynamic recommendations and checked that fallback logic worked when external sources were unavailable.
+  - I only kept changes that passed tests and produced expected output in the app flow.
+
+
 - Give one example of a suggestion you rejected or changed:
-	- A cache refactor initially broke compatibility with tests that expected list-form cache entries.
-	- I changed the implementation to support both old list format and new TTL dictionary format, then re-ran tests.
+	- I rejected relying only on static hardcoded skill-to-course mappings. I changed the design to include dynamic discovery (Wikidata/fallback chain) for better coverage.
+  - I rejected relying only on static hardcoded skill-to-course mappings. I changed the design to include dynamic discovery (Wikidata/fallback chain) for better coverage.
+  - I rejected leaving print-based error handling in services. I switched to centralized structured logging for better debugging and observability.
+  - rejected keeping venv/pip-style setup in the README because my workflow uses uv. I updated commands to uv sync and uv run 
+  - I rejected using a test command that assumes a frontend test script exists (npm run test) since it was not configured. I changed it to npm run lint for a valid quality check.
 
 Tradeoffs & Prioritization:
 - What did you cut to stay within the 4–6 hour limit?

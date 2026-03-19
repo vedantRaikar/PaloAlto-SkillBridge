@@ -12,6 +12,10 @@ import numpy as np
 from typing import List, Dict, Optional, Set, Tuple
 from functools import lru_cache
 import re
+from app.core.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 class SemanticSkillMatcher:
@@ -54,7 +58,7 @@ class SemanticSkillMatcher:
                 self._model = SentenceTransformer(self._model_name)
                 self._precompute_embeddings()
             except Exception as e:
-                print(f"Warning: Could not load embedding model: {e}")
+                logger.warning("Could not load embedding model: %s", e)
                 return None
         return self._model
     
@@ -91,7 +95,7 @@ class SemanticSkillMatcher:
             self._embedding_cache[normalized] = embedding
             return embedding
         except Exception as e:
-            print(f"Error getting embedding for '{skill}': {e}")
+            logger.exception("Error getting embedding for '%s'", skill)
             return None
     
     def cosine_similarity(self, emb1: np.ndarray, emb2: np.ndarray) -> float:

@@ -126,6 +126,30 @@ Design notes:
 - Graph edges encode relationships (requires, teaches, related_to, etc.).
 - Graph supports traversal-based insights for gap and progression analysis.
 
+Why we chose a knowledge graph-based approach:
+- Relationship-first problem fit:
+   - SkillBridge is fundamentally a relationship problem (user -> skills -> role requirements -> courses/certifications).
+   - A graph models these links directly instead of forcing them into rigid table joins.
+- Better recommendation explainability:
+   - We can explain recommendations through explicit paths, for example:
+      - "Role requires X"
+      - "You have Y"
+      - "Course Z teaches missing skill X"
+   - This increases user trust compared to black-box outputs.
+- Natural support for path-based algorithms:
+   - Core logic (prerequisite ordering, shortest-path optimization, related-skill expansion) maps naturally to graph traversal.
+   - This aligns well with the Dijkstra and topological ordering logic already used in the system.
+- Easier incremental knowledge growth:
+   - New roles, skills, courses, and certifications can be added as nodes/edges without schema redesign.
+   - This is useful for evolving taxonomies and dynamic external sources.
+- Robust fallback behavior:
+   - Graph-first retrieval allows reuse of previously discovered resources.
+   - If external APIs are slow/unavailable, existing graph relationships still support recommendations.
+
+Trade-off acknowledged:
+- For very large scale and high-concurrency workloads, graph persistence should evolve beyond JSON-backed storage.
+- The current choice optimizes development speed and explainability, with a clear migration path to a production graph/database stack.
+
 ### 4.3 Gap Analysis Engine
 Responsibility:
 - Compute matched and missing skills for target roles.
