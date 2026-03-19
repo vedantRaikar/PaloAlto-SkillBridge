@@ -7,12 +7,22 @@ class NodeType(str, Enum):
     ROLE = "role"
     COURSE = "course"
     USER = "user"
+    COMPANY = "company"
+    LOCATION = "location"
+    EXPERIENCE_LEVEL = "experience_level"
+    CERTIFICATION = "certification"
+    DOMAIN = "domain"
+    PROVIDER = "provider"
 
 class LinkType(str, Enum):
     REQUIRES = "REQUIRES"
     TEACHES = "TEACHES"
     HAS_SKILL = "HAS_SKILL"
     PART_OF = "PART_OF"
+    HIRES = "HIRES"
+    LOCATED_AT = "LOCATED_AT"
+    RELATED_TO = "RELATED_TO"
+    PREREQUISITE_FOR = "PREREQUISITE_FOR"
 
 class Node(BaseModel):
     id: str

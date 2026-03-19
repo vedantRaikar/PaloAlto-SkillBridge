@@ -1,0 +1,601 @@
+{
+  "occupations": {
+    "software_developer": {
+      "title": "Software Developer/Engineer",
+      "onet_code": "15-1252.00",
+      "skills": [
+        "programming",
+        "software development",
+        "debugging",
+        "testing",
+        "code review",
+        "git",
+        "agile"
+      ],
+      "tools": [
+        "ide",
+        "version control",
+        "ci/cd",
+        "docker",
+        "kubernetes"
+      ],
+      "knowledge": [
+        "computer science",
+        "data structures",
+        "algorithms"
+      ]
+    },
+    "data_scientist": {
+      "title": "Data Scientist",
+      "onet_code": "15-2051.00",
+      "skills": [
+        "python",
+        "machine learning",
+        "statistics",
+        "sql",
+        "data analysis",
+        "visualization"
+      ],
+      "tools": [
+        "jupyter",
+        "tensorflow",
+        "pytorch",
+        "pandas",
+        "tableau"
+      ],
+      "knowledge": [
+        "mathematics",
+        "statistics",
+        "machine learning",
+        "programming"
+      ]
+    },
+    "data_engineer": {
+      "title": "Data Engineer",
+      "onet_code": "15-1252.00",
+      "skills": [
+        "sql",
+        "python",
+        "etl",
+        "data warehousing",
+        "big data",
+        "spark",
+        "airflow"
+      ],
+      "tools": [
+        "hadoop",
+        "spark",
+        "kafka",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "knowledge": [
+        "databases",
+        "distributed systems",
+        "cloud platforms"
+      ]
+    },
+    "devops_engineer": {
+      "title": "DevOps Engineer",
+      "onet_code": "15-1252.00",
+      "skills": [
+        "linux",
+        "scripting",
+        "ci/cd",
+        "infrastructure as code",
+        "monitoring",
+        "docker",
+        "kubernetes"
+      ],
+      "tools": [
+        "jenkins",
+        "terraform",
+        "ansible",
+        "prometheus",
+        "grafana"
+      ],
+      "knowledge": [
+        "operating systems",
+        "networking",
+        "cloud computing"
+      ]
+    },
+    "cloud_engineer": {
+      "title": "Cloud Engineer/Architect",
+      "onet_code": "15-1299.00",
+      "skills": [
+        "cloud computing",
+        "aws",
+        "azure",
+        "gcp",
+        "infrastructure as code",
+        "networking",
+        "security"
+      ],
+      "tools": [
+        "terraform",
+        "cloudformation",
+        "kubernetes",
+        "docker"
+      ],
+      "knowledge": [
+        "cloud architecture",
+        "networking",
+        "security",
+        "cost optimization"
+      ]
+    },
+    "cybersecurity_analyst": {
+      "title": "Cybersecurity Analyst",
+      "onet_code": "15-1212.00",
+      "skills": [
+        "security",
+        "network security",
+        "vulnerability assessment",
+        "incident response",
+        "penetration testing"
+      ],
+      "tools": [
+        "siem",
+        "ids/ips",
+        "firewalls",
+        "nmap",
+        "metasploit"
+      ],
+      "knowledge": [
+        "security frameworks",
+        "compliance",
+        "cryptography"
+      ]
+    },
+    "machine_learning_engineer": {
+      "title": "Machine Learning Engineer",
+      "onet_code": "15-2051.00",
+      "skills": [
+        "python",
+        "deep learning",
+        "tensorflow",
+        "pytorch",
+        "mlops",
+        "model deployment"
+      ],
+      "tools": [
+        "kubeflow",
+        "mlflow",
+        "sagemaker",
+        "vertex ai"
+      ],
+      "knowledge": [
+        "machine learning",
+        "deep learning",
+        "statistics",
+        "distributed computing"
+      ]
+    },
+    "frontend_developer": {
+      "title": "Frontend Developer",
+      "onet_code": "15-1257.00",
+      "skills": [
+        "html",
+        "css",
+        "javascript",
+        "react",
+        "typescript",
+        "responsive design",
+        "accessibility"
+      ],
+      "tools": [
+        "webpack",
+        "npm",
+        "git",
+        "browsers"
+      ],
+      "knowledge": [
+        "web standards",
+        "ui/ux principles",
+        "performance optimization"
+      ]
+    },
+    "backend_developer": {
+      "title": "Backend Developer",
+      "onet_code": "15-1252.00",
+      "skills": [
+        "python",
+        "java",
+        "nodejs",
+        "sql",
+        "apis",
+        "microservices",
+        "caching"
+      ],
+      "tools": [
+        "databases",
+        "message queues",
+        "cache systems",
+        "api gateways"
+      ],
+      "knowledge": [
+        "server architecture",
+        "database design",
+        "security"
+      ]
+    },
+    "full_stack_developer": {
+      "title": "Full Stack Developer",
+      "onet_code": "15-1252.00",
+      "skills": [
+        "html",
+        "css",
+        "javascript",
+        "react",
+        "nodejs",
+        "sql",
+        "git",
+        "api design"
+      ],
+      "tools": [
+        "frontend frameworks",
+        "backend frameworks",
+        "databases",
+        "version control"
+      ],
+      "knowledge": [
+        "web development",
+        "databases",
+        "server management"
+      ]
+    },
+    "site_reliability_engineer": {
+      "title": "Site Reliability Engineer",
+      "onet_code": "15-1252.00",
+      "skills": [
+        "linux",
+        "scripting",
+        "monitoring",
+        "incident response",
+        "automation",
+        "docker"
+      ],
+      "tools": [
+        "prometheus",
+        "grafana",
+        "kubernetes",
+        "terraform",
+        "jenkins"
+      ],
+      "knowledge": [
+        "systems engineering",
+        "networking",
+        "incident management"
+      ]
+    },
+    "product_manager": {
+      "title": "Product Manager",
+      "onet_code": "11-2022.00",
+      "skills": [
+        "product strategy",
+        "agile",
+        "data analysis",
+        "stakeholder management",
+        "roadmapping"
+      ],
+      "tools": [
+        "jira",
+        "confluence",
+        "analytics tools"
+      ],
+      "knowledge": [
+        "product development",
+        "market analysis",
+        "user research"
+      ]
+    }
+  },
+  "skills": {
+    "programming_languages": [
+      "python",
+      "java",
+      "javascript",
+      "typescript",
+      "c++",
+      "c#",
+      "go",
+      "rust",
+      "ruby",
+      "php",
+      "swift",
+      "kotlin",
+      "scala",
+      "r"
+    ],
+    "frontend": [
+      "html",
+      "css",
+      "sass",
+      "javascript",
+      "typescript",
+      "react",
+      "vue",
+      "angular",
+      "nextjs",
+      "gatsby",
+      "tailwind",
+      "bootstrap",
+      "webpack",
+      "vite"
+    ],
+    "backend": [
+      "nodejs",
+      "express",
+      "django",
+      "flask",
+      "spring",
+      "rails",
+      "laravel",
+      "fastapi",
+      "asp.net",
+      "graphql",
+      "rest api"
+    ],
+    "databases": [
+      "sql",
+      "postgresql",
+      "mysql",
+      "mongodb",
+      "redis",
+      "elasticsearch",
+      "dynamodb",
+      "cassandra",
+      "neo4j",
+      "sqlite"
+    ],
+    "cloud": [
+      "aws",
+      "azure",
+      "gcp",
+      "digitalocean",
+      "heroku",
+      "vercel",
+      "netlify"
+    ],
+    "devops": [
+      "docker",
+      "kubernetes",
+      "terraform",
+      "ansible",
+      "jenkins",
+      "github actions",
+      "gitlab ci",
+      "circleci",
+      "prometheus",
+      "grafana",
+      "elk stack"
+    ],
+    "data": [
+      "sql",
+      "python",
+      "r",
+      "tableau",
+      "power bi",
+      "excel",
+      "pandas",
+      "numpy",
+      "jupyter",
+      "spark",
+      "hadoop",
+      "kafka"
+    ],
+    "machine_learning": [
+      "machine learning",
+      "deep learning",
+      "tensorflow",
+      "pytorch",
+      "scikit-learn",
+      "nlp",
+      "computer vision",
+      "reinforcement learning",
+      "mlops"
+    ],
+    "security": [
+      "network security",
+      "penetration testing",
+      "ethical hacking",
+      "siem",
+      "firewalls",
+      "encryption",
+      "compliance",
+      "threat modeling"
+    ],
+    "soft_skills": [
+      "communication",
+      "problem solving",
+      "teamwork",
+      "leadership",
+      "time management",
+      "critical thinking",
+      "adaptability",
+      "creativity"
+    ]
+  },
+  "technologies": {
+    "docker": {
+      "category": "devops",
+      "related": [
+        "containerization",
+        "kubernetes",
+        "microservices"
+      ]
+    },
+    "kubernetes": {
+      "category": "devops",
+      "related": [
+        "docker",
+        "helm",
+        "service mesh",
+        "istio"
+      ]
+    },
+    "jenkins": {
+      "category": "ci/cd",
+      "related": [
+        "github actions",
+        "gitlab ci",
+        "circleci"
+      ]
+    },
+    "terraform": {
+      "category": "iac",
+      "related": [
+        "cloudformation",
+        "ansible",
+        "pulumi"
+      ]
+    },
+    "ansible": {
+      "category": "configuration",
+      "related": [
+        "chef",
+        "puppet",
+        "terraform"
+      ]
+    },
+    "react": {
+      "category": "frontend",
+      "related": [
+        "vue",
+        "angular",
+        "svelte",
+        "nextjs"
+      ]
+    },
+    "vue": {
+      "category": "frontend",
+      "related": [
+        "react",
+        "angular",
+        "svelte",
+        "nuxt"
+      ]
+    },
+    "angular": {
+      "category": "frontend",
+      "related": [
+        "react",
+        "vue",
+        "svelte"
+      ]
+    },
+    "nodejs": {
+      "category": "backend",
+      "related": [
+        "express",
+        "nestjs",
+        "deno"
+      ]
+    },
+    "django": {
+      "category": "backend",
+      "related": [
+        "flask",
+        "fastapi",
+        "rails"
+      ]
+    },
+    "flask": {
+      "category": "backend",
+      "related": [
+        "django",
+        "fastapi",
+        "bottle"
+      ]
+    },
+    "postgresql": {
+      "category": "database",
+      "related": [
+        "mysql",
+        "mariadb",
+        "sqlite"
+      ]
+    },
+    "mongodb": {
+      "category": "database",
+      "related": [
+        "cassandra",
+        "dynamodb",
+        "firebase"
+      ]
+    },
+    "redis": {
+      "category": "cache",
+      "related": [
+        "memcached",
+        "varnish",
+        "elasticsearch"
+      ]
+    },
+    "aws": {
+      "category": "cloud",
+      "related": [
+        "azure",
+        "gcp",
+        "digitalocean"
+      ]
+    },
+    "tensorflow": {
+      "category": "ml",
+      "related": [
+        "pytorch",
+        "keras",
+        "jax"
+      ]
+    },
+    "pytorch": {
+      "category": "ml",
+      "related": [
+        "tensorflow",
+        "mxnet",
+        "chainer"
+      ]
+    }
+  },
+  "knowledge_areas": {
+    "computer science": [
+      "algorithms",
+      "data structures",
+      "complexity",
+      "programming"
+    ],
+    "mathematics": [
+      "linear algebra",
+      "calculus",
+      "statistics",
+      "probability"
+    ],
+    "software engineering": [
+      "agile",
+      "testing",
+      "design patterns",
+      "architecture"
+    ],
+    "networking": [
+      "tcp/ip",
+      "http",
+      "dns",
+      "routing",
+      "security"
+    ],
+    "data science": [
+      "statistics",
+      "machine learning",
+      "visualization",
+      "sql"
+    ],
+    "cybersecurity": [
+      "threats",
+      "vulnerabilities",
+      "mitigations",
+      "compliance"
+    ]
+  }
+}

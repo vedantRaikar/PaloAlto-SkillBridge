@@ -13,6 +13,7 @@ class SkillGap(BaseModel):
     matched_skills: list[str] = Field(default_factory=list)
     missing_skills: list[str] = Field(default_factory=list)
     courses_for_gaps: dict[str, list[dict]] = Field(default_factory=dict)
+    certifications_for_gaps: dict[str, list[dict]] = Field(default_factory=dict)
 
 class WeekPlan(BaseModel):
     week: int

@@ -1,0 +1,55 @@
+{
+  "courses": [
+    {
+      "id": "freecodecamp_learn_java",
+      "title": "Learn Java",
+      "provider": "freecodecamp",
+      "url": "https://www.freecodecamp.org/news/learn-java-free/",
+      "instructor": "freeCodeCamp",
+      "duration_hours": 25.0,
+      "rating": 4.8,
+      "num_ratings": null,
+      "num_students": 1000000,
+      "price": 0.0,
+      "is_free": true,
+      "level": "beginner",
+      "skills_taught": [
+        "JavaScript"
+      ],
+      "thumbnail_url": null,
+      "description": "Free Java programming course",
+      "curriculum_summary": null,
+      "language": "en",
+      "last_updated": null,
+      "source": "scraped",
+      "relevance_score": null,
+      "timestamp": "2026-03-19T08:24:22.716422"
+    },
+    {
+      "id": "coursera_java_programming",
+      "title": "Java Programming",
+      "provider": "coursera",
+      "url": "https://www.coursera.org/learn/java-programming",
+      "instructor": "Duke University",
+      "duration_hours": 40.0,
+      "rating": 4.7,
+      "num_ratings": null,
+      "num_students": 500000,
+      "price": 0.0,
+      "is_free": false,
+      "level": "beginner",
+      "skills_taught": [
+        "JavaScript"
+      ],
+      "thumbnail_url": null,
+      "description": "Java programming fundamentals",
+      "curriculum_summary": null,
+      "language": "en",
+      "last_updated": null,
+      "source": "scraped",
+      "relevance_score": null,
+      "timestamp": "2026-03-19T08:24:22.716422"
+    }
+  ],
+  "timestamp": "2026-03-19T08:24:22.757187"
+}

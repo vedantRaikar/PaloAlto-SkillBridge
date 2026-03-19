@@ -20,35 +20,35 @@ class LLMExtractionOutput(BaseModel):
     nodes: list[ExtractedNode] = Field(default_factory=list)
     links: list[ExtractedLink] = Field(default_factory=list)
 
-EXTRACTION_PROMPT = PromptTemplate.from_template("""
-You are a skill extraction system. Analyze the job description and extract:
-1. All required skills/technologies (map to simple IDs like "react", "python", "aws")
-2. The job role (map to simple ID like "frontend_developer", "backend_developer")
+EXTRACTION_PROMPT = PromptTemplate.from_template('''
+You are a skill extraction system. Analyze the job description and extract technical skills, technologies, and the job role.
+
+Extract:
+1. All required skills/technologies mentioned (programming languages, frameworks, tools, platforms, databases, etc.)
+2. The job role/title
 3. Relationships between role and skills
 
-Return ONLY valid JSON in this exact format:
+Return ONLY valid JSON:
 {{
   "nodes": [
-    {{"id": "skill_id", "type": "skill", "category": "programming|frontend|backend|devops|cloud|database|ai|tools"}},
-    }
+    {{"id": "skill_name_in_snake_case", "type": "skill", "category": "inferred_category"}}
   ],
   "links": [
     {{"source": "role_id", "target": "skill_id", "type": "REQUIRES"}}
   ]
 }}
 
-Rules:
-- Use lowercase IDs with underscores (react, python, aws, kubernetes)
-- Categories must be: programming, frontend, backend, devops, cloud, database, ai, tools
-- Remove articles (a, an, the) from skill names
-- Combine multi-word skills (machine learning → machine_learning)
-- Remove version numbers (React 18 → react)
+Guidelines:
+- Use lowercase IDs with underscores for skill names (e.g., machine_learning, amazon_web_services)
+- Infer appropriate categories based on what the skill is (programming, frontend, backend, devops, cloud, database, ai, tools, security, mobile, api, architecture, data, infrastructure)
+- Combine multi-word skills into single snake_case IDs
+- Remove version numbers and articles
 
 Job Title: {title}
 Job Description: {description}
 
 JSON Response:
-""")
+''')
 
 class EntityExtractor:
     def __init__(self, api_key: Optional[str] = None, model: str = "llama-3.1-8b-instant"):
@@ -101,7 +101,7 @@ class EntityExtractor:
                 Link(
                     source=l["source"],
                     target=l["target"],
-                    type=l["type"]
+                    type=l.get("type", "REQUIRES")
                 )
                 for l in result.get("links", [])
             ]
@@ -152,7 +152,7 @@ class EntityExtractor:
                 Link(
                     source=l["source"],
                     target=l["target"],
-                    type=l["type"]
+                    type=l.get("type", "REQUIRES")
                 )
                 for l in result.get("links", [])
             ]

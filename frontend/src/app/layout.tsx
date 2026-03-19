@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import './globals.css'
-import { GraduationCap, User, BarChart3, Map } from 'lucide-react'
+import { GraduationCap, User, BarChart3, Map, Briefcase, BookOpen, Award } from 'lucide-react'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -26,6 +26,10 @@ export default function RootLayout({
               <span>SkillBridge</span>
             </Link>
             <div className="flex items-center gap-6">
+              <Link href="/jobs" className="flex items-center gap-2 text-sm hover:text-blue-600">
+                <Briefcase className="h-4 w-4" />
+                Jobs
+              </Link>
               <Link href="/profile" className="flex items-center gap-2 text-sm hover:text-blue-600">
                 <User className="h-4 w-4" />
                 Profile
@@ -37,6 +41,14 @@ export default function RootLayout({
               <Link href="/roadmap" className="flex items-center gap-2 text-sm hover:text-blue-600">
                 <Map className="h-4 w-4" />
                 Roadmap
+              </Link>
+              <Link href="/courses" className="flex items-center gap-2 text-sm hover:text-blue-600">
+                <BookOpen className="h-4 w-4" />
+                Courses
+              </Link>
+              <Link href="/certifications" className="flex items-center gap-2 text-sm hover:text-blue-600">
+                <Award className="h-4 w-4" />
+                Certs
               </Link>
             </div>
           </div>

@@ -1,20 +1,41 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { roadmapApi } from '@/lib/api'
+import { roadmapApi, learningApi } from '@/lib/api'
 import { useUserStore } from '@/stores/userStore'
-import type { Role, GapAnalysis, SkillGap } from '@/lib/types'
+import { CourseCard, CourseCardSkeleton } from '@/components/course-card'
+import { CertificationCard, CertificationCardSkeleton } from '@/components/certification-card'
+import type { Role, GapAnalysis } from '@/lib/types'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
-import { Target, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
+import { Target, CheckCircle, AlertCircle, ArrowRight, BookOpen, Loader2 } from 'lucide-react'
 
 const COLORS = ['#22c55e', '#f97316', '#3b82f6', '#8b5cf6', '#ec4899']
 
-export default function AnalyzePage() {
+interface LearningResources {
+  courses: any[]
+  certifications: any[]
+  loading: boolean
+}
+
+function AnalyzePageLoader() {
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="text-center py-12 flex items-center justify-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AnalyzePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { userId, skills, selectedRole, setSelectedRole } = useUserStore()
@@ -22,6 +43,11 @@ export default function AnalyzePage() {
   const [roles, setRoles] = useState<Role[]>([])
   const [gapAnalysis, setGapAnalysis] = useState<GapAnalysis | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [learningResources, setLearningResources] = useState<LearningResources>({
+    courses: [],
+    certifications: [],
+    loading: false,
+  })
 
   useEffect(() => {
     roadmapApi.roles().then((data) => {
@@ -40,6 +66,12 @@ export default function AnalyzePage() {
     }
   }, [selectedRole, userId])
 
+  useEffect(() => {
+    if (gapAnalysis?.gap_analysis.missing_skills.length) {
+      loadLearningResources(gapAnalysis.gap_analysis.missing_skills)
+    }
+  }, [gapAnalysis])
+
   const loadGapAnalysis = async () => {
     if (!selectedRole || !userId) return
     setIsLoading(true)
@@ -53,8 +85,40 @@ export default function AnalyzePage() {
     }
   }
 
-  const getRoleTitle = (roleId: string) => {
-    return roles.find((r) => r.id === roleId)?.title?.replace(/_/g, ' ') || roleId
+  const loadLearningResources = async (missingSkills: string[]) => {
+    setLearningResources(prev => ({ ...prev, loading: true }))
+    try {
+      const resources = await learningApi.getResourcesForGap(missingSkills, skills)
+      
+      const allCourses: any[] = []
+      const allCerts: any[] = []
+      
+      Object.values(resources.resources || {}).forEach((resource: any) => {
+        if (resource.courses) {
+          allCourses.push(...resource.courses)
+        }
+        if (resource.certifications) {
+          allCerts.push(...resource.certifications)
+        }
+      })
+      
+      const uniqueCourses = allCourses.filter((c, i, arr) => 
+        arr.findIndex(x => x.id === c.id) === i
+      ).slice(0, 12)
+      
+      const uniqueCerts = allCerts.filter((c, i, arr) => 
+        arr.findIndex(x => x.id === c.id) === i
+      ).slice(0, 6)
+      
+      setLearningResources({
+        courses: uniqueCourses,
+        certifications: uniqueCerts,
+        loading: false,
+      })
+    } catch (error) {
+      console.error('Failed to load learning resources:', error)
+      setLearningResources(prev => ({ ...prev, loading: false }))
+    }
   }
 
   const chartData = gapAnalysis
@@ -83,7 +147,7 @@ export default function AnalyzePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
+      <div className="container mx-auto px-4 max-w-7xl">
         <h1 className="text-3xl font-bold mb-2">Skill Gap Analysis</h1>
         <p className="text-muted-foreground mb-8">
           Identify the skills you need to acquire for your target career
@@ -125,129 +189,173 @@ export default function AnalyzePage() {
               <CardTitle className="text-sm font-medium">Readiness Score</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${gapAnalysis?.readiness_score >= 70 ? 'text-green-600' : gapAnalysis?.readiness_score >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>
-                {gapAnalysis?.readiness_score || 0}%
+              <div className={`text-2xl font-bold ${
+                (gapAnalysis?.readiness_score ?? 0) >= 70 
+                  ? 'text-green-600' 
+                  : (gapAnalysis?.readiness_score ?? 0) >= 40 
+                    ? 'text-yellow-600' 
+                    : 'text-red-600'
+              }`}>
+                {gapAnalysis?.readiness_score ?? 0}%
               </div>
-              <Progress value={gapAnalysis?.readiness_score || 0} className="mt-2 h-2" />
+              <Progress value={gapAnalysis?.readiness_score ?? 0} className="mt-2 h-2" />
             </CardContent>
           </Card>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12">Analyzing skills...</div>
+          <div className="text-center py-12 flex items-center justify-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Analyzing skills...</span>
+          </div>
         ) : gapAnalysis ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  Skills You Have ({gapAnalysis.gap_analysis.matched_skills.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {gapAnalysis.gap_analysis.matched_skills.length > 0 ? (
-                    gapAnalysis.gap_analysis.matched_skills.map((skill) => (
-                      <Badge key={skill} variant="success" className="capitalize">
-                        {skill.replace(/_/g, ' ')}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">No matching skills found</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-orange-500" />
-                  Skills You Need ({gapAnalysis.gap_analysis.missing_skills.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {gapAnalysis.gap_analysis.missing_skills.length > 0 ? (
-                    gapAnalysis.gap_analysis.missing_skills.map((skill) => (
-                      <Badge key={skill} variant="warning" className="capitalize">
-                        {skill.replace(/_/g, ' ')}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-green-600 font-medium">You're all set! No gaps found.</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Gap Overview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="text-center mt-4">
-                  <Button onClick={() => router.push(`/roadmap?role=${selectedRole}`)}>
-                    Generate Learning Roadmap
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {gapAnalysis.gap_analysis.missing_skills.length > 0 && (
-              <Card className="md:col-span-2">
+          <>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <Card>
                 <CardHeader>
-                  <CardTitle>Recommended Courses for Gap Skills</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    Skills You Have ({gapAnalysis.gap_analysis.matched_skills.length})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {gapAnalysis.gap_analysis.missing_skills.slice(0, 6).map((skill) => {
-                      const courses = gapAnalysis.gap_analysis.courses_for_gaps[skill] || []
-                      return (
-                        <div key={skill} className="border rounded-lg p-4">
-                          <h4 className="font-medium capitalize mb-2">{skill.replace(/_/g, ' ')}</h4>
-                          {courses.length > 0 ? (
-                            <div className="space-y-2">
-                              {courses.slice(0, 2).map((course: any) => (
-                                <div key={course.id} className="text-sm">
-                                  <p className="font-medium truncate">{course.title}</p>
-                                  <p className="text-muted-foreground text-xs">{course.provider}</p>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">No courses available</p>
-                          )}
-                        </div>
-                      )
-                    })}
+                  <div className="flex flex-wrap gap-2">
+                    {gapAnalysis.gap_analysis.matched_skills.length > 0 ? (
+                      gapAnalysis.gap_analysis.matched_skills.map((skill) => (
+                        <Badge key={skill} variant="success" className="capitalize">
+                          {skill.replace(/_/g, ' ')}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">No matching skills found</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-orange-500" />
+                    Skills You Need ({gapAnalysis.gap_analysis.missing_skills.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {gapAnalysis.gap_analysis.missing_skills.length > 0 ? (
+                      gapAnalysis.gap_analysis.missing_skills.map((skill) => (
+                        <Badge key={skill} variant="warning" className="capitalize">
+                          {skill.replace(/_/g, ' ')}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-green-600 font-medium">You're all set! No gaps found.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <Card className="md:col-span-1">
+                <CardHeader>
+                  <CardTitle>Gap Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={chartData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={60}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {chartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Recommended Certifications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {learningResources.loading ? (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <CertificationCardSkeleton />
+                      <CertificationCardSkeleton />
+                    </div>
+                  ) : learningResources.certifications.length > 0 ? (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {learningResources.certifications.map((cert) => (
+                        <CertificationCard key={cert.id} certification={cert} compact />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-4">
+                      No certifications found for your skill gaps
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {gapAnalysis.gap_analysis.missing_skills.length > 0 && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-blue-500" />
+                    Recommended Courses for Gap Skills
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {learningResources.loading ? (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {[1, 2, 3, 4].map((i) => (
+                        <CourseCardSkeleton key={i} />
+                      ))}
+                    </div>
+                  ) : learningResources.courses.length > 0 ? (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {learningResources.courses.map((course) => (
+                        <CourseCard key={course.id} course={course} compact />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-8">
+                      No courses available for your skill gaps yet. 
+                      <br />
+                      <Button variant="link" onClick={() => router.push('/courses')}>
+                        Search for courses manually
+                      </Button>
+                    </p>
+                  )}
+                  
+                  <div className="mt-6 pt-6 border-t flex gap-4">
+                    <Button onClick={() => router.push(`/roadmap?role=${selectedRole}`)}>
+                      Generate Learning Roadmap
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" onClick={() => router.push('/courses')}>
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Browse All Courses
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             )}
-          </div>
+          </>
         ) : (
           <Card>
             <CardContent className="py-12 text-center">
@@ -259,5 +367,13 @@ export default function AnalyzePage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AnalyzePage() {
+  return (
+    <Suspense fallback={<AnalyzePageLoader />}>
+      <AnalyzePageContent />
+    </Suspense>
   )
 }

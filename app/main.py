@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import roadmap, user, ingestion, extraction, profile
+from app.api.routes import roadmap, user, ingestion, extraction, profile, jobs, courses
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,6 +22,8 @@ app.include_router(user.router, prefix=f"{settings.API_V1_STR}/user", tags=["Use
 app.include_router(ingestion.router, prefix=f"{settings.API_V1_STR}/ingest", tags=["Ingestion"])
 app.include_router(extraction.router, prefix=f"{settings.API_V1_STR}/extraction", tags=["Extraction"])
 app.include_router(profile.router, prefix=f"{settings.API_V1_STR}/profile", tags=["Profile"])
+app.include_router(jobs.router, prefix=f"{settings.API_V1_STR}/jobs", tags=["Jobs"])
+app.include_router(courses.router, prefix=f"{settings.API_V1_STR}/learning", tags=["Learning Resources"])
 
 @app.get("/")
 async def root():

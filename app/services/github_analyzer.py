@@ -3,41 +3,54 @@ import asyncio
 import time
 from typing import Optional, List, Dict, Tuple
 from functools import lru_cache
+from langchain_groq import ChatGroq
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+from pydantic import BaseModel, Field
 from app.services.resolver import SkillResolver
+from app.core.config import settings
 
 GITHUB_API = "https://api.github.com"
 CACHE_TTL_SECONDS = 300
 
-LANGUAGE_MAPPING = {
-    "python": "python",
-    "javascript": "javascript",
-    "typescript": "typescript",
-    "java": "java",
-    "go": "go",
-    "rust": "rust",
-    "c++": "cpp",
-    "c#": "csharp",
-    "ruby": "ruby",
-    "php": "php",
-    "swift": "swift",
-    "kotlin": "kotlin",
-    "scala": "scala",
-    "html": "html_css",
-    "css": "html_css",
-    "shell": "bash",
-    "dockerfile": "docker",
-}
+LANGUAGE_TO_SKILL_PROMPT = PromptTemplate.from_template('''
+Given a list of programming languages/technologies found in a GitHub profile, map them to skill names.
 
-PACKAGE_FILES = {
-    "requirements.txt": "pip",
-    "package.json": "npm",
-    "Pipfile": "pip",
-    "pyproject.toml": "pip",
-    "go.mod": "go",
-    "Cargo.toml": "rust",
-    "Gemfile": "ruby",
-    "composer.json": "php",
-}
+Languages found: {languages}
+
+Return ONLY valid JSON:
+{{
+  "skill_mappings": [
+    {{
+      "language": "python",
+      "skill_id": "python",
+      "category": "programming"
+    }}
+  ],
+  "top_skills": ["skill1", "skill2", ...]
+}}
+
+JSON Response:
+''')
+
+REPO_ANALYSIS_PROMPT = PromptTemplate.from_template('''
+Analyze this repository information and identify the technologies, frameworks, and skills it uses.
+
+Repository name: {repo_name}
+Description: {description}
+Languages used: {languages}
+
+Return ONLY valid JSON:
+{{
+  "technologies": ["react", "django", "docker", ...],
+  "frameworks": ["express", "flask", ...],
+  "infrastructure": ["aws", "kubernetes", ...],
+  "databases": ["postgresql", "mongodb", ...],
+  "skills": ["skill1", "skill2", ...]
+}}
+
+JSON Response:
+''')
 
 
 class GitHubCache:
@@ -66,11 +79,23 @@ class GitHubAnalyzer:
         self.token = token
         self.resolver = SkillResolver()
         self.max_concurrent = max_concurrent
+        self.api_key = settings.GROQ_API_KEY
+        self._llm = None
+        self._skill_mappings_cache: Dict[str, List[str]] = {}
         self.headers = {
             "Accept": "application/vnd.github.v3+json"
         }
         if token:
             self.headers["Authorization"] = f"token {token}"
+
+    def _initialize_llm(self):
+        if self._llm is None and self.api_key:
+            self._llm = ChatGroq(
+                api_key=self.api_key,
+                model="llama-3.1-8b-instant",
+                temperature=0.1,
+                max_tokens=1024
+            )
 
     async def _fetch_with_client(
         self,
@@ -152,6 +177,53 @@ class GitHubAnalyzer:
 
         return combined
 
+    async def _map_languages_to_skills_llm(self, languages: List[str]) -> List[str]:
+        if not languages:
+            return []
+        
+        cache_key = ','.join(sorted(languages))
+        if cache_key in self._skill_mappings_cache:
+            return self._skill_mappings_cache[cache_key]
+        
+        self._initialize_llm()
+        if not self._llm:
+            return languages
+        
+        try:
+            class SkillMapping(BaseModel):
+                language: str
+                skill_id: str
+                category: Optional[str] = None
+            
+            class LanguageMappings(BaseModel):
+                skill_mappings: List[SkillMapping] = Field(default_factory=list)
+                top_skills: List[str] = Field(default_factory=list)
+            
+            chain = LANGUAGE_TO_SKILL_PROMPT | self._llm | JsonOutputParser()
+            result = await chain.ainvoke({"languages": ', '.join(languages)})
+            
+            top_skills = result.get("top_skills", [])
+            self._skill_mappings_cache[cache_key] = top_skills
+            return top_skills
+        except Exception:
+            return languages
+
+    async def _analyze_repo_llm(self, repo_name: str, description: str, languages: List[str]) -> Dict:
+        self._initialize_llm()
+        if not self._llm:
+            return {"skills": languages}
+        
+        try:
+            chain = REPO_ANALYSIS_PROMPT | self._llm | JsonOutputParser()
+            result = await chain.ainvoke({
+                "repo_name": repo_name,
+                "description": description or "",
+                "languages": ', '.join(languages)
+            })
+            return result
+        except Exception:
+            return {"skills": languages}
+
     async def analyze_profile(self, username: str) -> Dict:
         user = await self.get_user(username)
         if not user:
@@ -177,14 +249,16 @@ class GitHubAnalyzer:
             language_percentages = {}
 
         top_languages = list(language_percentages.keys())[:5]
+        
+        top_skills = await self._map_languages_to_skills_llm(top_languages)
+        
         resolved_skills = []
-        for lang in top_languages:
-            mapped = LANGUAGE_MAPPING.get(lang.lower(), lang.lower())
-            resolved = self.resolver.resolve_skill(mapped)
+        for skill in top_skills:
+            resolved = self.resolver.resolve_skill(skill)
             if resolved:
                 resolved_skills.append(resolved)
             else:
-                resolved_skills.append(mapped)
+                resolved_skills.append(skill)
 
         return {
             "username": username,

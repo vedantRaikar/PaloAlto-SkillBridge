@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,7 +23,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   unknown: 'bg-gray-400',
 }
 
-export default function RoadmapPage() {
+function RoadmapContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { userId, selectedRole, setSelectedRole } = useUserStore()
@@ -281,5 +281,28 @@ export default function RoadmapPage() {
         )}
       </div>
     </div>
+  )
+}
+
+function RoadmapLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4">
+        <div className="animate-pulse">
+          <div className="h-8 w-64 bg-gray-200 rounded mb-2"></div>
+          <div className="h-4 w-96 bg-gray-200 rounded mb-6"></div>
+          <div className="h-12 w-full max-w-md bg-gray-200 rounded mb-6"></div>
+          <div className="h-64 w-full bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function RoadmapPage() {
+  return (
+    <Suspense fallback={<RoadmapLoading />}>
+      <RoadmapContent />
+    </Suspense>
   )
 }

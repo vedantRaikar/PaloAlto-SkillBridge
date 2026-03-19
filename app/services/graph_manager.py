@@ -1,9 +1,14 @@
 import json
 import networkx as nx
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set
 from app.core.config import settings
 from app.models.graph import Node, Link, NodeType, LinkType
+
+CATEGORIES = ['programming', 'frontend', 'backend', 'devops', 'cloud', 'database', 
+              'ai', 'tools', 'security', 'mobile', 'api', 'architecture', 
+              'data', 'infrastructure', 'quality', 'methodology']
+
 
 class GraphManager:
     _instance = None
@@ -25,68 +30,14 @@ class GraphManager:
             GraphManager._graph = nx.node_link_graph(data, directed=True)
         else:
             GraphManager._graph = nx.DiGraph()
-            self._initialize_default_graph()
+            self._initialize_empty_graph()
 
-    def _initialize_default_graph(self):
-        nodes = [
-            {"id": "frontend_developer", "type": "role", "title": "Frontend Developer"},
-            {"id": "backend_developer", "type": "role", "title": "Backend Developer"},
-            {"id": "devops_engineer", "type": "role", "title": "DevOps Engineer"},
-            {"id": "fullstack_developer", "type": "role", "title": "Full Stack Developer"},
-            {"id": "data_scientist", "type": "role", "title": "Data Scientist"},
-            {"id": "javascript", "type": "skill", "category": "programming"},
-            {"id": "typescript", "type": "skill", "category": "programming"},
-            {"id": "react", "type": "skill", "category": "frontend"},
-            {"id": "html_css", "type": "skill", "category": "frontend"},
-            {"id": "python", "type": "skill", "category": "programming"},
-            {"id": "sql", "type": "skill", "category": "database"},
-            {"id": "postgresql", "type": "skill", "category": "database"},
-            {"id": "docker", "type": "skill", "category": "devops"},
-            {"id": "kubernetes", "type": "skill", "category": "devops"},
-            {"id": "aws", "type": "skill", "category": "cloud"},
-            {"id": "git", "type": "skill", "category": "tools"},
-            {"id": "fastapi", "type": "skill", "category": "backend"},
-            {"id": "nodejs", "type": "skill", "category": "backend"},
-            {"id": "mongodb", "type": "skill", "category": "database"},
-            {"id": "machine_learning", "type": "skill", "category": "ai"},
-            {"id": "pandas", "type": "skill", "category": "ai"},
-            {"id": "course_react_101", "type": "course", "title": "React - The Complete Guide", "provider": "Udemy", "duration_hours": 52},
-            {"id": "course_python_101", "type": "course", "title": "Python for Data Science", "provider": "Coursera", "duration_hours": 40},
-            {"id": "course_docker_101", "type": "course", "title": "Docker Mastery", "provider": "Udemy", "duration_hours": 20},
-            {"id": "course_aws_101", "type": "course", "title": "AWS Certified Solutions Architect", "provider": "AWS Training", "duration_hours": 30},
-        ]
+    def _initialize_empty_graph(self):
+        for category in CATEGORIES:
+            node_id = f"category_{category}"
+            self._graph.add_node(node_id, id=node_id, type="domain", title=category.title())
         
-        links = [
-            {"source": "frontend_developer", "target": "javascript", "type": "REQUIRES"},
-            {"source": "frontend_developer", "target": "react", "type": "REQUIRES"},
-            {"source": "frontend_developer", "target": "html_css", "type": "REQUIRES"},
-            {"source": "backend_developer", "target": "python", "type": "REQUIRES"},
-            {"source": "backend_developer", "target": "sql", "type": "REQUIRES"},
-            {"source": "backend_developer", "target": "fastapi", "type": "REQUIRES"},
-            {"source": "devops_engineer", "target": "docker", "type": "REQUIRES"},
-            {"source": "devops_engineer", "target": "kubernetes", "type": "REQUIRES"},
-            {"source": "devops_engineer", "target": "aws", "type": "REQUIRES"},
-            {"source": "devops_engineer", "target": "python", "type": "REQUIRES"},
-            {"source": "fullstack_developer", "target": "javascript", "type": "REQUIRES"},
-            {"source": "fullstack_developer", "target": "react", "type": "REQUIRES"},
-            {"source": "fullstack_developer", "target": "python", "type": "REQUIRES"},
-            {"source": "fullstack_developer", "target": "sql", "type": "REQUIRES"},
-            {"source": "data_scientist", "target": "python", "type": "REQUIRES"},
-            {"source": "data_scientist", "target": "machine_learning", "type": "REQUIRES"},
-            {"source": "data_scientist", "target": "pandas", "type": "REQUIRES"},
-            {"source": "data_scientist", "target": "sql", "type": "REQUIRES"},
-            {"source": "course_react_101", "target": "react", "type": "TEACHES"},
-            {"source": "course_python_101", "target": "python", "type": "TEACHES"},
-            {"source": "course_docker_101", "target": "docker", "type": "TEACHES"},
-            {"source": "course_aws_101", "target": "aws", "type": "TEACHES"},
-        ]
-        
-        for node in nodes:
-            self._graph.add_node(node["id"], **{k: v for k, v in node.items() if k != "id"})
-        
-        for link in links:
-            self._graph.add_edge(link["source"], link["target"], type=link["type"], weight=1.0)
-        
+        settings.DATA_DIR.mkdir(parents=True, exist_ok=True)
         self.save_graph()
 
     @property
@@ -100,10 +51,12 @@ class GraphManager:
             json.dump(data, f, indent=2)
 
     def add_node(self, node: Node):
-        self.graph.add_node(node.id, **{k: v for k, v in node.model_dump().items() if k != "id"})
+        node_dict = {k: v for k, v in node.model_dump().items() if k != "id"}
+        self.graph.add_node(node.id, **node_dict)
 
     def add_edge(self, source: str, target: str, link_type: LinkType, weight: float = 1.0):
-        self.graph.add_edge(source, target, type=link_type.value, weight=weight)
+        link_type_str = link_type.value if hasattr(link_type, 'value') else link_type
+        self.graph.add_edge(source, target, type=link_type_str, weight=weight)
 
     def get_role_skills(self, role_id: str) -> List[str]:
         return [t for _, t in self.graph.out_edges(role_id) 
@@ -114,9 +67,9 @@ class GraphManager:
                 if self.graph.nodes[t].get('type') == 'skill']
 
     def get_courses_for_skill(self, skill_id: str) -> List[Dict]:
-        return [{'id': s, **self.graph.nodes[s]} 
-                for s, _ in self.graph.in_edges(skill_id)
-                if self.graph.nodes[s].get('type') == 'course']
+        return [{'id': t, **self.graph.nodes[t]} 
+                for _, t in self.graph.out_edges(skill_id)
+                if self.graph.nodes[t].get('type') == 'course']
 
     def get_all_roles(self) -> List[Dict]:
         return [{'id': n, **self.graph.nodes[n]} 
@@ -128,6 +81,16 @@ class GraphManager:
                 for n in self.graph.nodes() 
                 if self.graph.nodes[n].get('type') == 'skill']
 
+    def get_all_courses(self) -> List[Dict]:
+        return [{'id': n, **self.graph.nodes[n]} 
+                for n in self.graph.nodes() 
+                if self.graph.nodes[n].get('type') == 'course']
+
+    def get_skills_by_category(self, category: str) -> List[str]:
+        return [n for n in self.graph.nodes() 
+                if self.graph.nodes[n].get('type') == 'skill' 
+                and self.graph.nodes[n].get('category') == category]
+
     def get_shortest_learning_path(self, from_skill: str, to_skill: str) -> List[str]:
         try:
             return nx.shortest_path(self.graph, from_skill, to_skill)
@@ -138,3 +101,92 @@ class GraphManager:
         if node_id in self.graph.nodes:
             return {'id': node_id, **self.graph.nodes[node_id]}
         return None
+
+    def node_exists(self, node_id: str) -> bool:
+        return node_id in self.graph.nodes
+
+    def get_node_type(self, node_id: str) -> Optional[str]:
+        if node_id in self.graph.nodes:
+            return self.graph.nodes[node_id].get('type')
+        return None
+
+    def get_related_skills(self, skill_id: str) -> List[str]:
+        related = []
+        for s, t, data in self.graph.edges(data=True):
+            if s == skill_id and data.get('type') == 'RELATED_TO':
+                related.append(t)
+            if t == skill_id and data.get('type') == 'RELATED_TO':
+                related.append(s)
+        return related
+
+    def get_skill_category(self, skill_id: str) -> Optional[str]:
+        if skill_id in self.graph.nodes:
+            return self.graph.nodes[skill_id].get('category')
+        return None
+
+    def add_skill_with_category(self, skill_id: str, category: str, title: Optional[str] = None):
+        if not self.node_exists(skill_id):
+            node = Node(
+                id=skill_id,
+                type=NodeType.SKILL,
+                category=category,
+                title=title or skill_id.replace('_', ' ').title()
+            )
+            self.add_node(node)
+            
+            category_node = f"category_{category}"
+            if self.node_exists(category_node):
+                self.add_edge(category_node, skill_id, LinkType.PART_OF)
+
+    def add_role_with_skills(self, role_id: str, skill_ids: List[str], title: Optional[str] = None):
+        if not self.node_exists(role_id):
+            node = Node(
+                id=role_id,
+                type=NodeType.ROLE,
+                title=title or role_id.replace('_', ' ').title()
+            )
+            self.add_node(node)
+        
+        for skill_id in skill_ids:
+            if not self.node_exists(skill_id):
+                self.add_skill_with_category(skill_id, "programming")
+            
+            if not self.graph.has_edge(role_id, skill_id):
+                self.add_edge(role_id, skill_id, LinkType.REQUIRES)
+
+    def add_course_with_skills(self, course_id: str, skill_ids: List[str], title: str, provider: Optional[str] = None):
+        if not self.node_exists(course_id):
+            node = Node(
+                id=course_id,
+                type=NodeType.COURSE,
+                title=title,
+                metadata={'provider': provider} if provider else {}
+            )
+            self.add_node(node)
+        
+        for skill_id in skill_ids:
+            if not self.node_exists(skill_id):
+                self.add_skill_with_category(skill_id, "programming")
+            
+            if not self.graph.has_edge(course_id, skill_id):
+                self.add_edge(course_id, skill_id, LinkType.TEACHES)
+
+    def remove_node(self, node_id: str):
+        if node_id in self.graph.nodes:
+            self.graph.remove_node(node_id)
+
+    def remove_edge(self, source: str, target: str):
+        if self.graph.has_edge(source, target):
+            self.graph.remove_edge(source, target)
+
+    def get_graph_stats(self) -> Dict:
+        nodes = list(self.graph.nodes())
+        return {
+            'total_nodes': len(nodes),
+            'roles': len([n for n in nodes if self.graph.nodes[n].get('type') == 'role']),
+            'skills': len([n for n in nodes if self.graph.nodes[n].get('type') == 'skill']),
+            'courses': len([n for n in nodes if self.graph.nodes[n].get('type') == 'course']),
+            'total_edges': self.graph.number_of_edges(),
+            'categories': list(set(self.graph.nodes[n].get('category') for n in nodes 
+                                  if self.graph.nodes[n].get('category')))
+        }
