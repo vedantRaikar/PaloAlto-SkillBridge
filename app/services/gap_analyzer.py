@@ -1,7 +1,11 @@
-from typing import List, Dict
+from typing import List, Dict, Set
 from app.services.graph_manager import GraphManager
 from app.models.user import SkillGap
-from app.services.knowledge_sources.onet_integration import get_skill_mapper
+from app.services.knowledge_sources.onet_integration import get_skill_mapper, SKILL_ALIASES
+from app.services.similarity.semantic_matcher import get_semantic_matcher
+from app.services.learning_path_generator import get_learning_path_generator
+from app.services.fast_track_generator import get_fast_track_generator
+from app.services.optimized_path_generator import get_optimized_path_generator
 
 class GapAnalyzer:
     _instance = None
@@ -19,20 +23,91 @@ class GapAnalyzer:
         self._course_cache: Dict[str, List[Dict]] = {}
         self._cert_cache: Dict[str, List[Dict]] = {}
         self._skill_mapper = None
+        self._skill_alias_map: Dict[str, Set[str]] = {}
+        self._semantic_matcher = None
         self._initialized = True
+        self._build_alias_map()
+    
+    def _build_alias_map(self):
+        """Build bidirectional alias mapping for skills"""
+        for skill, aliases in SKILL_ALIASES.items():
+            self._skill_alias_map[skill.lower()] = {a.lower() for a in aliases}
+            for alias in aliases:
+                if alias.lower() not in self._skill_alias_map:
+                    self._skill_alias_map[alias.lower()] = set()
+                self._skill_alias_map[alias.lower()].add(skill.lower())
+    
+    @property
+    def semantic_matcher(self):
+        """Lazy load semantic matcher for better skill matching"""
+        if self._semantic_matcher is None:
+            self._semantic_matcher = get_semantic_matcher()
+        return self._semantic_matcher
+    
+    def _normalize_skill(self, skill: str) -> str:
+        """Normalize skill name to canonical form"""
+        normalized = skill.lower().strip().replace(" ", "_").replace("-", "_")
+        return normalized
+    
+    def _skills_match(self, skill1: str, skill2: str) -> bool:
+        """
+        Check if two skills match using semantic similarity.
+        Uses multiple strategies for best accuracy:
+        1. Exact match (fastest)
+        2. Alias match
+        3. Substring match
+        4. Semantic similarity (most accurate)
+        """
+        s1 = self._normalize_skill(skill1)
+        s2 = self._normalize_skill(skill2)
+        
+        if s1 == s2:
+            return True
+        
+        if s1 in self._skill_alias_map.get(s2, set()):
+            return True
+        if s2 in self._skill_alias_map.get(s1, set()):
+            return True
+        
+        try:
+            return self.semantic_matcher.skills_match(skill1, skill2)
+        except Exception:
+            return False
     
     @property
     def skill_mapper(self):
         if self._skill_mapper is None:
             self._skill_mapper = get_skill_mapper()
         return self._skill_mapper
+    
+    def _get_role_skills(self, target_role: str) -> List[str]:
+        """Get skills for a role from graph or O*NET fallback."""
+        graph_skills = self.graph_manager.get_role_skills(target_role)
+        if graph_skills:
+            return graph_skills
+        
+        from app.services.knowledge_sources.onet_integration import get_onet_knowledge
+        onet = get_onet_knowledge()
+        onet_skills = onet.get_skills_for_occupation(target_role)
+        if onet_skills:
+            return onet_skills
+        
+        return []
 
     def analyze_gaps(self, user_id: str, target_role: str) -> SkillGap:
-        required_skills = self.graph_manager.get_role_skills(target_role)
+        required_skills = self._get_role_skills(target_role)
         user_skills = self.graph_manager.get_user_skills(user_id)
         
-        gaps = [s for s in required_skills if s not in user_skills]
-        matched = [s for s in required_skills if s in user_skills]
+        if not user_skills:
+            from app.services.knowledge_sources.onet_integration import get_onet_knowledge
+            onet = get_onet_knowledge()
+            all_known_skills = []
+            for occ in onet.get_all_occupations():
+                all_known_skills.extend(occ.get('skills', []))
+            user_skills = [s for s in all_known_skills if any(self._skills_match(s, us) for us in user_skills)]
+        
+        gaps = [s for s in required_skills if not any(self._skills_match(s, us) for us in user_skills)]
+        matched = [s for s in required_skills if any(self._skills_match(s, us) for us in user_skills)]
         
         gap_courses = {}
         gap_certifications = {}
@@ -50,6 +125,136 @@ class GapAnalyzer:
             missing_skills=gaps,
             courses_for_gaps=gap_courses,
             certifications_for_gaps=gap_certifications,
+        )
+
+    def get_ordered_learning_path(self, user_id: str, target_role: str) -> Dict:
+        """
+        Get an ordered learning path for reaching the target role.
+        Uses topological sort based on skill prerequisites.
+        
+        Returns:
+            {
+                "ordered_skills": [...],  # Skills in learning order
+                "phases": {
+                    "foundation": [...],     # Start here
+                    "intermediate": [...],
+                    "advanced": [...]
+                },
+                "milestones": {...},        # Learning milestones per skill
+                "estimated_days": int,
+                "estimated_weeks": float,
+            }
+        """
+        user_skills = self.graph_manager.get_user_skills(user_id)
+        required_skills = self._get_role_skills(target_role)
+        
+        gaps = [s for s in required_skills if not any(self._skills_match(s, us) for us in user_skills)]
+        
+        path_generator = get_learning_path_generator()
+        learning_path = path_generator.generate_learning_path(gaps, user_skills)
+        
+        skills_with_resources = {}
+        for skill in learning_path["ordered_skills"]:
+            courses = self._get_cached_courses(skill)
+            certs = self._get_cached_certs(skill)
+            skills_with_resources[skill] = {
+                "skill": skill,
+                "level": path_generator.get_skill_level(skill),
+                "category": path_generator.get_skill_category(skill),
+                "prerequisites": learning_path["prerequisites"].get(skill, []),
+                "courses": courses[:3],
+                "certifications": certs[:2],
+            }
+        
+        return {
+            "target_role": target_role,
+            "user_skills": user_skills,
+            "ordered_skills": learning_path["ordered_skills"],
+            "phases": learning_path["phases"],
+            "milestones": skills_with_resources,
+            "total_skills_to_learn": learning_path["total_skills_to_learn"],
+            "estimated_days": learning_path["estimated_days"],
+            "estimated_weeks": learning_path["estimated_weeks"],
+            "category_breakdown": learning_path["category_breakdown"],
+        }
+
+    def get_fast_track_path(
+        self,
+        user_id: str,
+        target_role: str,
+        max_skills: int = 5
+    ) -> Dict:
+        """
+        Get the fastest path to job readiness.
+        Prioritizes essential skills and quick courses.
+        
+        Returns:
+            {
+                "type": "fast_track",
+                "target_role": str,
+                "user_skills": [...],
+                "fast_track_skills": [...],
+                "skill_details": [...],
+                "current_readiness": float,
+                "projected_readiness": float,
+                "total_hours": int,
+                "total_weeks": float,
+                "study_plan": [...]
+            }
+        """
+        user_skills = self.graph_manager.get_user_skills(user_id)
+        required_skills = self._get_role_skills(target_role)
+        
+        if not user_skills:
+            user_skills = []
+        
+        fast_track_gen = get_fast_track_generator()
+        return fast_track_gen.generate_fast_track(
+            user_skills=user_skills,
+            target_role=target_role,
+            all_role_skills=required_skills,
+            max_skills_to_learn=max_skills
+        )
+
+    def get_optimized_paths(
+        self,
+        user_id: str,
+        target_role: str
+    ) -> Dict:
+        """
+        Get optimized learning paths using Dijkstra's algorithm.
+        
+        Uses graph shortest path algorithms to find:
+        1. Fastest path (minimum time)
+        2. Most impactful path (highest job market value)
+        3. Most efficient path (best impact per hour)
+        
+        Returns:
+            {
+                "paths": [...],
+                "recommendation": {...},
+                "analysis": {...}
+            }
+        """
+        user_skills = self.graph_manager.get_user_skills(user_id)
+        required_skills = self._get_role_skills(target_role)
+        
+        if not user_skills:
+            user_skills = []
+        
+        user_skill_set = set(s.lower().replace(" ", "_").replace("-", "_") for s in user_skills)
+        
+        missing_skills = [
+            s for s in required_skills
+            if s.lower().replace(" ", "_").replace("-", "_") not in user_skill_set
+        ]
+        
+        optimized_gen = get_optimized_path_generator()
+        return optimized_gen.generate_optimized_paths(
+            user_skills=user_skills,
+            target_role=target_role,
+            all_role_skills=required_skills,
+            missing_skills=missing_skills
         )
 
     def _get_cached_courses(self, skill_id: str) -> List[Dict]:

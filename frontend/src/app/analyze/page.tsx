@@ -10,9 +10,11 @@ import { roadmapApi, learningApi } from '@/lib/api'
 import { useUserStore } from '@/stores/userStore'
 import { CourseCard, CourseCardSkeleton } from '@/components/course-card'
 import { CertificationCard, CertificationCardSkeleton } from '@/components/certification-card'
+import { ChatWidget } from '@/components/chat-widget'
+import { FastTrackPath } from '@/components/fast-track-path'
 import type { Role, GapAnalysis } from '@/lib/types'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
-import { Target, CheckCircle, AlertCircle, ArrowRight, BookOpen, Loader2 } from 'lucide-react'
+import { Target, CheckCircle, AlertCircle, ArrowRight, BookOpen, Loader2, Zap } from 'lucide-react'
 
 const COLORS = ['#22c55e', '#f97316', '#3b82f6', '#8b5cf6', '#ec4899']
 
@@ -203,6 +205,10 @@ function AnalyzePageContent() {
           </Card>
         </div>
 
+        {gapAnalysis && gapAnalysis.readiness_score < 100 && (
+          <FastTrackPath className="mb-8" />
+        )}
+
         {isLoading ? (
           <div className="text-center py-12 flex items-center justify-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -374,6 +380,7 @@ export default function AnalyzePage() {
   return (
     <Suspense fallback={<AnalyzePageLoader />}>
       <AnalyzePageContent />
+      <ChatWidget />
     </Suspense>
   )
 }

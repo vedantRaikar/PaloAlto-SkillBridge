@@ -71,6 +71,50 @@ async def get_roadmap(user_id: str, target_role: str):
     roadmap = roadmap_generator.generate_structured_roadmap(user_id, target_role)
     return roadmap
 
+@router.get("/{user_id}/{target_role}/learning-path")
+async def get_learning_path(user_id: str, target_role: str):
+    """
+    Get an ordered learning path for reaching the target role.
+    Skills are sorted by prerequisites and grouped into phases.
+    """
+    learning_path = gap_analyzer.get_ordered_learning_path(user_id, target_role)
+    return learning_path
+
+@router.get("/{user_id}/{target_role}/fast-track")
+async def get_fast_track(
+    user_id: str,
+    target_role: str,
+    max_skills: int = 5
+):
+    """
+    Get the fastest path to job readiness.
+    
+    - Prioritizes essential skills (minimum viable skillset)
+    - Selects fastest courses (free + short duration)
+    - Orders by impact/speed ratio
+    - Provides week-by-week study plan
+    
+    Query params:
+    - max_skills: Maximum skills to include (default 5)
+    """
+    fast_track = gap_analyzer.get_fast_track_path(user_id, target_role, max_skills)
+    return fast_track
+
+@router.get("/{user_id}/{target_role}/optimized-paths")
+async def get_optimized_paths(user_id: str, target_role: str):
+    """
+    Get optimized learning paths using Dijkstra's shortest path algorithm.
+    
+    Returns multiple paths optimized for different criteria:
+    - Fastest: Minimum total time to job readiness
+    - Most Impactful: Highest job market value first
+    - Most Efficient: Best impact per hour
+    
+    Uses weighted graph where edge weight = course duration.
+    """
+    paths = gap_analyzer.get_optimized_paths(user_id, target_role)
+    return paths
+
 @router.get("/{user_id}/{target_role}/requirements")
 async def get_role_requirements(user_id: str, target_role: str):
     requirements = gap_analyzer.get_role_requirements(target_role)

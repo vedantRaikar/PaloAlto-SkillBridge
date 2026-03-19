@@ -10,6 +10,23 @@ from app.models.certification import (
 )
 from app.core.config import settings
 
+CERT_SKILL_ALIASES = {
+    "aws": ["amazon web services", "amazon_webservices", "aws cloud"],
+    "azure": ["microsoft azure", "azure cloud", "az-900"],
+    "gcp": ["google cloud platform", "google cloud", "gcp cloud"],
+    "security": ["cybersecurity", "infosec", "information security"],
+    "networking": ["computer networking", "network administration"],
+    "kubernetes": ["k8s", "kube", "container orchestration"],
+    "machine learning": ["ml", "machine_learning", "ml ai"],
+    "cloud": ["cloud computing", "cloud platform"],
+    "docker": ["containerization", "containers"],
+    "terraform": ["iac", "infrastructure as code"],
+    "python": ["python3", "python programming"],
+    "javascript": ["js", "ecmascript", "es6"],
+    "typescript": ["ts", "typescript javascript"],
+    "database": ["db", "databases", "sql", "nosql"],
+}
+
 PROVIDER_CERTS = {
     "aws": [
         {"id": "aws_saa", "name": "AWS Certified Solutions Architect - Associate", "short_name": "SAA-C03", "level": "associate", "cost_usd": 150, "validity_years": 3, "skills_covered": ["aws", "cloud", "architecture", "ec2", "s3", "vpc"], "exam_url": "https://aws.amazon.com/certification/certified-solutions-architect-associate/"},
@@ -166,19 +183,39 @@ class CertificationDiscoveryService:
                     return self._create_certification(cert_data)
         return None
 
+    def _skills_match(self, skill1: str, skill2: str) -> bool:
+        """Check if skills match (exact or alias)"""
+        s1 = skill1.lower().strip()
+        s2 = skill2.lower().strip()
+        
+        if s1 == s2:
+            return True
+        
+        for skill, aliases in CERT_SKILL_ALIASES.items():
+            if s1 == skill.lower() and s2 in [a.lower() for a in aliases]:
+                return True
+            if s2 == skill.lower() and s1 in [a.lower() for a in aliases]:
+                return True
+        
+        tokens1 = set(s1.replace("_", " ").split())
+        tokens2 = set(s2.replace("_", " ").split())
+        if tokens1 == tokens2 or tokens1.issubset(tokens2) or tokens2.issubset(tokens1):
+            return True
+        
+        return False
+
     def get_by_skill(self, skill_id: str) -> List[Certification]:
         if skill_id in self._cert_cache:
             return self._cert_cache[skill_id]
         
-        skill_lower = skill_id.lower().replace("_", " ")
         results = []
         
         for certs in PROVIDER_CERTS.values():
             for cert_data in certs:
                 skills = cert_data.get("skills_covered", [])
-                if any(skill_lower in s.lower() for s in skills):
+                if any(self._skills_match(skill_id, s) for s in skills):
                     results.append(self._create_certification(cert_data))
-                elif skill_lower in cert_data.get("name", "").lower():
+                elif self._skills_match(skill_id, cert_data.get("name", "")):
                     results.append(self._create_certification(cert_data))
         
         seen = set()

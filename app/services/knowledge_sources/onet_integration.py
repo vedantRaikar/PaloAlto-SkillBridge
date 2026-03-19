@@ -40,13 +40,13 @@ SKILL_TO_COURSES = {
         {"title": "Python for Everybody Specialization", "provider": "coursera", "url": "https://www.coursera.org/specializations/python", "instructor": "Dr. Charles Severance", "duration_hours": 60, "level": "beginner", "is_free": False, "rating": 4.8, "num_students": 1500000, "description": "Learn to Program and Analyze Data with Python"},
         {"title": "Automate the Boring Stuff", "provider": "automatetheboringstuff", "url": "https://automatetheboringstuff.com/", "instructor": "Al Sweigart", "duration_hours": 20, "level": "beginner", "is_free": True, "rating": 4.7, "num_students": 500000, "description": "Free Python automation book"},
     ],
-    "java": [
-        {"title": "Learn Java", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/learn-java-free/", "instructor": "freeCodeCamp", "duration_hours": 25, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 1000000, "description": "Free Java programming course"},
-        {"title": "Java Programming", "provider": "coursera", "url": "https://www.coursera.org/learn/java-programming", "instructor": "Duke University", "duration_hours": 40, "level": "beginner", "is_free": False, "rating": 4.7, "num_students": 500000, "description": "Java programming fundamentals"},
-    ],
     "javascript": [
         {"title": "JavaScript Algorithms and Data Structures", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/", "instructor": "freeCodeCamp", "duration_hours": 50, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 2000000, "description": "Learn JavaScript fundamentals and algorithms"},
         {"title": "JavaScript: The Good Parts", "provider": "github", "url": "https://github.com/getify/You-Dont-Know-JS", "instructor": "Kyle Simpson", "duration_hours": 15, "level": "intermediate", "is_free": True, "rating": 4.8, "num_students": 300000, "description": "Deep dive into JavaScript"},
+    ],
+    "java": [
+        {"title": "Learn Java", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/learn-java-free/", "instructor": "freeCodeCamp", "duration_hours": 25, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 1000000, "description": "Free Java programming course"},
+        {"title": "Java Programming", "provider": "coursera", "url": "https://www.coursera.org/learn/java-programming", "instructor": "Duke University", "duration_hours": 40, "level": "beginner", "is_free": False, "rating": 4.7, "num_students": 500000, "description": "Java programming fundamentals"},
     ],
     "typescript": [
         {"title": "TypeScript Handbook", "provider": "typescriptlang", "url": "https://www.typescriptlang.org/docs/handbook/", "instructor": "Microsoft", "duration_hours": 10, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 2000000, "description": "Official TypeScript documentation"},
@@ -76,10 +76,6 @@ SKILL_TO_COURSES = {
         {"title": "Machine Learning by Stanford", "provider": "coursera", "url": "https://www.coursera.org/learn/machine-learning", "instructor": "Andrew Ng", "duration_hours": 60, "level": "beginner", "is_free": False, "rating": 4.9, "num_students": 5000000, "description": "The most popular machine learning course"},
         {"title": "Intro to Machine Learning", "provider": "kaggle", "url": "https://www.kaggle.com/learn/intro-to-machine-learning", "instructor": "Kaggle", "duration_hours": 10, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 1000000, "description": "Free Kaggle course on ML basics"},
     ],
-    "deep learning": [
-        {"title": "Deep Learning Specialization", "provider": "coursera", "url": "https://www.coursera.org/specializations/deep-learning", "instructor": "Andrew Ng", "duration_hours": 80, "level": "intermediate", "is_free": False, "rating": 4.9, "num_students": 1000000, "description": "Master deep learning fundamentals"},
-        {"title": "Practical Deep Learning", "provider": "fastai", "url": "https://course.fast.ai/", "instructor": "Jeremy Howard", "duration_hours": 40, "level": "intermediate", "is_free": True, "rating": 4.9, "num_students": 300000, "description": "Free course taught by fast.ai"},
-    ],
     "react": [
         {"title": "React Tutorial", "provider": "react", "url": "https://react.dev/learn", "instructor": "Meta", "duration_hours": 20, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 5000000, "description": "Official React documentation and tutorial"},
         {"title": "freeCodeCamp React", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/learn/front-end-development-libraries/", "instructor": "freeCodeCamp", "duration_hours": 40, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 1000000, "description": "Free React course for beginners"},
@@ -91,17 +87,6 @@ SKILL_TO_COURSES = {
     "linux": [
         {"title": "Linux Server Course", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/linux-server-course/", "instructor": "freeCodeCamp", "duration_hours": 15, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 800000, "description": "Free Linux server administration course"},
     ],
-    "tensorflow": [
-        {"title": "TensorFlow Tutorials", "provider": "tensorflow", "url": "https://www.tensorflow.org/tutorials", "instructor": "Google", "duration_hours": 15, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 1000000, "description": "Official TensorFlow tutorials"},
-        {"title": "ML with TensorFlow", "provider": "coursera", "url": "https://www.coursera.org/learn/introduction-tensorflow", "instructor": "DeepLearning.AI", "duration_hours": 20, "level": "intermediate", "is_free": False, "rating": 4.7, "num_students": 300000, "description": "Learn TensorFlow basics"},
-    ],
-    "pytorch": [
-        {"title": "PyTorch Tutorials", "provider": "pytorch", "url": "https://pytorch.org/tutorials/", "instructor": "PyTorch", "duration_hours": 20, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 500000, "description": "Official PyTorch tutorials"},
-        {"title": "Deep Learning with PyTorch", "provider": "coursera", "url": "https://www.coursera.org/learn/deep-learning-with-pytorch", "instructor": "IBM", "duration_hours": 15, "level": "intermediate", "is_free": False, "rating": 4.7, "num_students": 200000, "description": "Deep learning using PyTorch"},
-    ],
-    "devops": [
-        {"title": "DevOps Engineering", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/devops-free-course/", "instructor": "freeCodeCamp", "duration_hours": 25, "level": "intermediate", "is_free": True, "rating": 4.8, "num_students": 400000, "description": "Free DevOps engineering course"},
-    ],
     "terraform": [
         {"title": "Terraform on Azure", "provider": "microsoft", "url": "https://learn.microsoft.com/training/paths/implement-infrastructure-as-code-using-terraform/", "instructor": "Microsoft", "duration_hours": 14, "level": "intermediate", "is_free": True, "rating": 4.7, "num_students": 100000, "description": "Free Microsoft Learn Terraform course"},
         {"title": "HashiCorp Tutorials", "provider": "hashicorp", "url": "https://developer.hashicorp.com/terraform/tutorials", "instructor": "HashiCorp", "duration_hours": 10, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 300000, "description": "Official HashiCorp Terraform tutorials"},
@@ -109,9 +94,6 @@ SKILL_TO_COURSES = {
     "security": [
         {"title": "Cybersecurity Fundamentals", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/learn-cybersecurity/", "instructor": "freeCodeCamp", "duration_hours": 20, "level": "beginner", "is_free": True, "rating": 4.7, "num_students": 500000, "description": "Free cybersecurity course"},
         {"title": "CompTIA Security+", "provider": "comptia", "url": "https://www.comptia.org/certifications/security", "instructor": "CompTIA", "duration_hours": 30, "level": "associate", "is_free": False, "rating": 4.8, "num_students": 200000, "description": "Security+ certification preparation"},
-    ],
-    "networking": [
-        {"title": "Computer Networking", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/computer-networking-course/", "instructor": "freeCodeCamp", "duration_hours": 20, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 600000, "description": "Free networking fundamentals course"},
     ],
     "html": [
         {"title": "Responsive Web Design", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/", "instructor": "freeCodeCamp", "duration_hours": 40, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 3000000, "description": "Free HTML and CSS course"},
@@ -123,27 +105,70 @@ SKILL_TO_COURSES = {
         {"title": "Node.js Course", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/learn-node-js-free-course/", "instructor": "freeCodeCamp", "duration_hours": 20, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 800000, "description": "Free Node.js and Express course"},
         {"title": "Express.js Guide", "provider": "expressjs", "url": "https://expressjs.com/en/starter/installing.html", "instructor": "Express", "duration_hours": 10, "level": "beginner", "is_free": True, "rating": 4.7, "num_students": 500000, "description": "Official Express.js getting started guide"},
     ],
-    "django": [
-        {"title": "Django Tutorials", "provider": "djangoproject", "url": "https://docs.djangoproject.com/en/4.2/intro/tutorial01/", "instructor": "Django", "duration_hours": 15, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 500000, "description": "Official Django tutorial"},
-        {"title": "Django for Everybody", "provider": "coursera", "url": "https://www.coursera.org/specializations/django", "instructor": "Charles Severance", "duration_hours": 40, "level": "beginner", "is_free": False, "rating": 4.8, "num_students": 200000, "description": "Learn Django web development"},
+    "devops": [
+        {"title": "DevOps Engineering", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/devops-free-course/", "instructor": "freeCodeCamp", "duration_hours": 25, "level": "intermediate", "is_free": True, "rating": 4.8, "num_students": 400000, "description": "Free DevOps engineering course"},
+    ],
+    "gcp": [
+        {"title": "Google Cloud Computing Foundations", "provider": "google", "url": "https://www.cloudskillsboost.google/paths", "instructor": "Google", "duration_hours": 30, "level": "beginner", "is_free": True, "rating": 4.7, "num_students": 300000, "description": "Free Google Cloud learning path"},
+    ],
+    "data science": [
+        {"title": "Data Science Course", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/free-data-science-course/", "instructor": "freeCodeCamp", "duration_hours": 40, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 1000000, "description": "Free comprehensive data science course"},
+    ],
+    "agile": [
+        {"title": "Agile Project Management", "provider": "coursera", "url": "https://www.coursera.org/learn/agile-project-management", "instructor": "University of Minnesota", "duration_hours": 20, "level": "beginner", "is_free": False, "rating": 4.7, "num_students": 400000, "description": "Agile methodologies course"},
     ],
     "mongodb": [
         {"title": "MongoDB University", "provider": "mongodb", "url": "https://learn.mongodb.com/", "instructor": "MongoDB", "duration_hours": 20, "level": "beginner", "is_free": True, "rating": 4.7, "num_students": 300000, "description": "Official free MongoDB courses"},
     ],
-    "postgresql": [
-        {"title": "PostgreSQL Tutorial", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/learn-sql-free-course/", "instructor": "freeCodeCamp", "duration_hours": 12, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 1500000, "description": "Free SQL course covering PostgreSQL"},
+    "django": [
+        {"title": "Django Tutorials", "provider": "djangoproject", "url": "https://docs.djangoproject.com/en/4.2/intro/tutorial01/", "instructor": "Django", "duration_hours": 15, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 500000, "description": "Official Django tutorial"},
+        {"title": "Django for Everybody", "provider": "coursera", "url": "https://www.coursera.org/specializations/django", "instructor": "Charles Severance", "duration_hours": 40, "level": "beginner", "is_free": False, "rating": 4.8, "num_students": 200000, "description": "Learn Django web development"},
     ],
-    "data science": [
-        {"title": "Data Science Course", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/free-data-science-course/", "instructor": "freeCodeCamp", "duration_hours": 40, "level": "beginner", "is_free": True, "rating": 4.9, "num_students": 1000000, "description": "Free comprehensive data science course"},
-        {"title": "Data Science Fundamentals", "provider": "coursera", "url": "https://www.coursera.org/learn/data-science-orientation", "instructor": "IBM", "duration_hours": 15, "level": "beginner", "is_free": False, "rating": 4.7, "num_students": 600000, "description": "IBM Data Science certificate course"},
+    "networking": [
+        {"title": "Computer Networking", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/computer-networking-course/", "instructor": "freeCodeCamp", "duration_hours": 20, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 600000, "description": "Free networking fundamentals course"},
     ],
-    "data analysis": [
-        {"title": "Data Analysis with Python", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/learn/data-analysis-with-python/", "instructor": "freeCodeCamp", "duration_hours": 25, "level": "intermediate", "is_free": True, "rating": 4.8, "num_students": 500000, "description": "Free Python data analysis course"},
+    "ci/cd": [
+        {"title": "CI/CD Pipeline Tutorial", "provider": "freecodecamp", "url": "https://www.freecodecamp.org/news/cicd-pipeline-tutorial/", "instructor": "freeCodeCamp", "duration_hours": 6, "level": "intermediate", "is_free": True, "rating": 4.6, "num_students": 150000, "description": "Free CI/CD pipeline course"},
     ],
-    "agile": [
-        {"title": "Agile Project Management", "provider": "coursera", "url": "https://www.coursera.org/learn/agile-project-management", "instructor": "University of Minnesota", "duration_hours": 20, "level": "beginner", "is_free": False, "rating": 4.7, "num_students": 400000, "description": "Agile methodologies course"},
-        {"title": "Scrum Guide", "provider": "scrum", "url": "https://www.scrum.org/resources/scrum-guide", "instructor": "Scrum.org", "duration_hours": 2, "level": "beginner", "is_free": True, "rating": 4.8, "num_students": 500000, "description": "Free Scrum.org introductory course"},
-    ],
+}
+
+SKILL_ALIASES = {
+    "javascript": ["js", "ecmascript", "es6", "es7", "es2015"],
+    "typescript": ["ts"],
+    "python": ["python3", "python2"],
+    "postgresql": ["postgres", "psql"],
+    "mongodb": ["mongo"],
+    "docker": ["docker containers", "containerization"],
+    "kubernetes": ["k8s", "k8", "kube"],
+    "amazon web services": ["aws"],
+    "google cloud platform": ["gcp", "google cloud"],
+    "microsoft azure": ["azure", "az"],
+    "machine learning": ["ml", "machine learning ai"],
+    "deep learning": ["dl", "neural networks", "neural_nets"],
+    "amazon web services": ["aws", "amazon web services", "aws cloud"],
+    "continuous integration": ["ci", "ci/cd"],
+    "continuous deployment": ["cd", "ci/cd"],
+    "sql": ["structured query language", "mysql", "postgresql", "mariadb"],
+    "nosql": ["non relational database", "non-relational db"],
+    "git": ["version control", "github", "gitlab", "bitbucket"],
+    "linux": ["unix", "bash", "shell scripting", "shell"],
+    "terraform": ["iac", "infrastructure as code", "hashicorp terraform"],
+    "ansible": ["configuration management", "automation"],
+    "ci/cd": ["cicd", "continuous integration", "continuous delivery"],
+    "react": ["reactjs", "react.js", "react native"],
+    "vue": ["vuejs", "vue.js"],
+    "angular": ["angularjs", "angular.js", "ng"],
+    "nodejs": ["node", "node.js", "express"],
+    "api": ["rest api", "restful api", "api design", "webservice"],
+    "graphql": ["graphql api"],
+    "html": ["html5", "hypertext markup language"],
+    "css": ["css3", "cascading style sheets"],
+    "agile": ["scrum", "kanban", "xp", "extreme programming"],
+    "security": ["cybersecurity", "infosec", "information security"],
+    "data science": ["ds", "data analytics"],
+    "data engineering": ["de", "data platform"],
+    "devops": ["devops engineering", "sre", "site reliability"],
+    "cloud computing": ["cloud"],
 }
 
 
@@ -392,15 +417,101 @@ class ONetKnowledgeBase:
         return related
     
     def get_courses_for_skill(self, skill: str) -> List[Dict]:
-        """Get verified courses for a skill"""
-        skill_lower = skill.lower().replace(" ", "_").replace("-", "_")
+        """Get verified courses for a skill using semantic matching"""
+        skill_normalized = self._normalize_skill(skill)
+        
+        if skill_normalized in SKILL_TO_COURSES:
+            return SKILL_TO_COURSES[skill_normalized]
+        
+        best_match = None
+        best_score = 0.0
         
         for key, courses in SKILL_TO_COURSES.items():
-            key_normalized = key.lower().replace(" ", "_")
-            if skill_lower in key_normalized or key_normalized in skill_lower:
+            score = self._get_similarity_score(skill_normalized, key)
+            if score > best_score:
+                best_score = score
+                best_match = key
+        
+        if best_match and best_score >= 0.6:
+            return SKILL_TO_COURSES[best_match]
+        
+        for key, courses in SKILL_TO_COURSES.items():
+            if self._skills_match(skill_normalized, key):
                 return courses
         
-        return SKILL_TO_COURSES.get(skill_lower, [])
+        return []
+    
+    def _normalize_skill(self, skill: str) -> str:
+        """Normalize skill name for matching"""
+        return skill.lower().replace(" ", "_").replace("-", "_")
+    
+    def _skills_match(self, skill1: str, skill2: str) -> bool:
+        """Check if two skills match (exact, alias, or similar)"""
+        s1 = skill1.lower().strip()
+        s2 = skill2.lower().strip()
+        
+        if s1 == s2:
+            return True
+        
+        if s1 in SKILL_ALIASES.get(s2, []) or s2 in SKILL_ALIASES.get(s1, []):
+            return True
+        
+        if self._tokens_match(s1, s2):
+            return True
+        
+        try:
+            from app.services.similarity.semantic_matcher import get_semantic_matcher
+            matcher = get_semantic_matcher()
+            return matcher.skills_match(skill1, skill2)
+        except Exception:
+            return False
+    
+    def _get_similarity_score(self, skill1: str, skill2: str) -> float:
+        """Get similarity score between two skills"""
+        s1 = skill1.lower().strip()
+        s2 = skill2.lower().strip()
+        
+        if s1 == s2:
+            return 1.0
+        
+        tokens1 = set(s1.replace("_", " ").split())
+        tokens2 = set(s2.replace("_", " ").split())
+        
+        if tokens1 == tokens2:
+            return 0.95
+        
+        intersection = tokens1 & tokens2
+        union = tokens1 | tokens2
+        
+        if union:
+            jaccard = len(intersection) / len(union)
+            if jaccard > 0.5:
+                return jaccard
+        
+        try:
+            from app.services.similarity.semantic_matcher import get_semantic_matcher
+            matcher = get_semantic_matcher()
+            emb1 = matcher.get_embedding(skill1)
+            emb2 = matcher.get_embedding(skill2)
+            if emb1 is not None and emb2 is not None:
+                return matcher.cosine_similarity(emb1, emb2)
+        except Exception:
+            pass
+        
+        return 0.0
+    
+    def _tokens_match(self, skill1: str, skill2: str) -> bool:
+        """Check if skills match at word level (not substring)"""
+        tokens1 = set(skill1.replace("_", " ").split())
+        tokens2 = set(skill2.replace("_", " ").split())
+        
+        if tokens1 == tokens2:
+            return True
+        
+        if tokens1.issubset(tokens2) or tokens2.issubset(tokens1):
+            return True
+        
+        return False
     
     def get_all_occupations(self) -> List[Dict]:
         """Get all available occupations"""
