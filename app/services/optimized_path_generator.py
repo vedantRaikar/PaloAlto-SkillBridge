@@ -6,7 +6,7 @@ Uses Dijkstra's algorithm and graph shortest path for optimal learning routes.
 
 from typing import List, Dict, Set, Optional, Tuple
 import heapq
-from app.services.knowledge_sources.onet_integration import SKILL_TO_COURSES, SKILL_ALIASES
+from app.services.knowledge_sources.onet_integration import SKILL_TO_COURSES, SKILL_ALIASES, get_skill_mapper
 from app.services.learning_path_generator import (
     SKILL_PREREQUISITES, 
     SKILL_LEVELS, 
@@ -88,6 +88,7 @@ class DijkstraPathFinder:
     def __init__(self):
         self.adjacency: Dict[str, List[Tuple[str, float]]] = {}
         self.skill_durations: Dict[str, float] = {}
+        self.skill_mapper = get_skill_mapper()
         self._build_skill_map()
     
     def _build_skill_map(self):
@@ -104,6 +105,10 @@ class DijkstraPathFinder:
     def _get_duration(self, skill: str) -> float:
         """Get fastest course duration for a skill."""
         skill_norm = self._normalize_skill(skill)
+
+        runtime_courses = self.skill_mapper.get_learning_path(skill_norm, refresh_live=True)
+        if runtime_courses:
+            return min(c.get("duration_hours", 20) for c in runtime_courses)
         
         if skill_norm in FAST_TRACK_COURSES:
             return min(c[2] for c in FAST_TRACK_COURSES[skill_norm])
@@ -121,7 +126,11 @@ class DijkstraPathFinder:
         return SKILL_PREREQUISITES.get(skill_norm, [])
     
     def build_graph(self, skills: List[str], user_skills: List[str]):
-        """Build prerequisite graph with duration weights."""
+        """Build prerequisite graph with duration weights.
+        
+        Edge direction: prerequisite -> dependent_skill
+        Weight: duration of the dependent skill (time to learn after prerequisites)
+        """
         self.adjacency.clear()
         self.skill_durations.clear()
         
@@ -131,12 +140,17 @@ class DijkstraPathFinder:
         for skill in all_skills:
             self.adjacency[skill] = []
             self.skill_durations[skill] = self._get_duration(skill)
+        
+        for skill in all_skills:
+            skill_duration = self._get_duration(skill)
             
             for prereq in self._get_prerequisites(skill):
                 prereq_norm = self._normalize_skill(prereq)
-                if prereq_norm in all_skills or prereq_norm in user_skill_set:
-                    duration = self._get_duration(prereq_norm)
-                    self.adjacency[skill].append((prereq_norm, duration))
+                if prereq_norm in all_skills:
+                    if prereq_norm not in self.adjacency:
+                        self.adjacency[prereq_norm] = []
+                        self.skill_durations[prereq_norm] = self._get_duration(prereq_norm)
+                    self.adjacency[prereq_norm].append((skill, skill_duration))
     
     def dijkstra_shortest_path(
         self, 
@@ -307,6 +321,7 @@ class OptimizedPathGenerator:
     
     def __init__(self):
         self.path_finder = DijkstraPathFinder()
+        self.skill_mapper = get_skill_mapper()
     
     def generate_optimized_paths(
         self,
@@ -380,7 +395,11 @@ class OptimizedPathGenerator:
     def _get_courses(self, skill: str) -> List[Dict]:
         """Get courses for a skill."""
         skill_norm = self.path_finder._normalize_skill(skill)
-        
+
+        runtime_courses = self.skill_mapper.get_learning_path(skill_norm, refresh_live=True)
+        if runtime_courses:
+            return runtime_courses[:3]
+
         courses = []
         if skill_norm in FAST_TRACK_COURSES:
             for title, provider, duration, is_free in FAST_TRACK_COURSES[skill_norm]:

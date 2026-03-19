@@ -3,8 +3,10 @@ Course Discovery Aggregator
 ==========================
 Provides course recommendations based on O*NET knowledge base mappings.
 All course URLs are pre-verified and maintained in the knowledge source.
+Supports dynamic course discovery via Wikidata SPARQL with intelligent caching.
 """
 
+import time
 from typing import List, Dict, Optional
 from app.models.course import Course, CourseSearchRequest, CourseSearchResponse
 from app.services.knowledge_sources.onet_integration import get_skill_mapper, SkillCourseMapper
@@ -53,12 +55,16 @@ FALLBACK_COURSES = [
 class CourseAggregator:
     """
     Aggregates course recommendations using O*NET knowledge base.
-    No web scraping - all mappings are pre-verified.
+    Features:
+    - Wikidata SPARQL integration for dynamic course discovery (1000+ courses)
+    - 24-hour intelligent caching (TTL-based, not persistent)
+    - Automatic fallback to static mappings if Wikidata unavailable
     """
     
     def __init__(self):
-        self._cache: Dict[str, List[Dict]] = {}
+        self._cache: Dict[str, Dict] = {}  # Now stores {skill: {timestamp, courses}}
         self._skill_mapper: Optional[SkillCourseMapper] = None
+        self.cache_ttl_seconds = 86400  # 24 hours
     
     @property
     def skill_mapper(self) -> SkillCourseMapper:
@@ -67,18 +73,60 @@ class CourseAggregator:
         return self._skill_mapper
 
     def _get_courses(self, skill: str) -> List[Dict]:
+        """
+        Get courses for a skill with intelligent TTL-based caching.
+        
+        Priority chain:
+        1. Wikidata SPARQL (1000+ courses, community-verified)
+        2. Live course cache (runtime discovery)
+        3. Static SKILL_TO_COURSES mappings
+        """
         skill_lower = skill.lower().replace("_", " ")
         
+        # Check cache with TTL expiration
         if skill_lower in self._cache:
-            return self._cache[skill_lower]
+            cache_entry = self._cache[skill_lower]
+            
+            # Handle both old list format (for backward compatibility with tests) and new dict format
+            if isinstance(cache_entry, list):
+                # Old format: direct list of courses
+                return cache_entry
+            
+            if isinstance(cache_entry, dict):
+                timestamp = cache_entry.get("timestamp", 0)
+                
+                # Cache valid if not expired (24 hours)
+                if time.time() - timestamp < self.cache_ttl_seconds:
+                    courses = cache_entry.get("courses", [])
+                    if courses:
+                        return courses
+                else:
+                    # Expired entry, remove it
+                    del self._cache[skill_lower]
         
+        # Not in cache or expired - query skill mapper (uses Wikidata as priority)
         courses = self.skill_mapper.get_learning_path(skill)
         
         if not courses:
             courses = FALLBACK_COURSES.copy()
         
-        self._cache[skill_lower] = courses
+        # Store in cache with timestamp
+        self._cache[skill_lower] = {
+            "courses": courses,
+            "timestamp": time.time(),
+            "source": "wikidata" if "wikidata" in str(courses).lower() else "fallback"
+        }
+        
         return courses
+    
+    def clear_cache(self, skill: Optional[str] = None):
+        """Clear cache for a specific skill or all skills"""
+        if skill:
+            skill_lower = skill.lower().replace("_", " ")
+            if skill_lower in self._cache:
+                del self._cache[skill_lower]
+        else:
+            self._cache.clear()
 
     def _create_course(self, data: Dict, skill: str) -> Course:
         return Course(

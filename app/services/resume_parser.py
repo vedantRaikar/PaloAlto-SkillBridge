@@ -468,7 +468,7 @@ class ResumeParser:
         }
     
     def _estimate_years(self, experience_text: str) -> Optional[int]:
-        year_pattern = r'(19|20)\d{2}'
+        year_pattern = r'(?:19|20)\d{2}'
         years = re.findall(year_pattern, experience_text)
         if len(years) >= 2:
             years_int = [int(y) for y in years]

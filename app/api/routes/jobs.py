@@ -1,43 +1,35 @@
 import os
 import json
 import uuid
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
-from app.services.job_ingestion import get_job_ingestion_service
+from typing import List, Dict, Any
 from app.services.extraction_pipeline import ExtractionPipeline
 from app.services.graph_manager import GraphManager
-from app.models.graph import Node, Link, LinkType
-from app.core.config import settings
+from app.models.graph import Node, LinkType, NodeType
 
 router = APIRouter()
 
-class JobIngestRequest(BaseModel):
-    url: Optional[str] = Field(None, description="LinkedIn job URL")
-    text: Optional[str] = Field(None, description="Raw job description text")
+class RoleBatchIngestRequest(BaseModel):
+    role_name: str = Field(..., min_length=2, max_length=120, description="Custom role name")
+    job_descriptions: List[str] = Field(..., min_length=2, description="List of similar job descriptions")
+    min_frequency: int = Field(1, ge=1, description="Minimum posting count a skill must appear in")
 
-class JobData(BaseModel):
-    title: str
-    company: Optional[str] = None
-    description: str
-    location: Optional[str] = None
-    experience_level: Optional[str] = None
-    employment_type: Optional[str] = None
-    industries: List[str] = Field(default_factory=list)
-    skills: List[str] = Field(default_factory=list)
 
-class JobResponse(BaseModel):
-    job_id: str
-    input_type: str
-    source: Optional[str] = None
-    data: JobData
-    extraction_result: Optional[Dict[str, Any]] = None
-    graph_updated: bool = False
-    role_id: Optional[str] = None
-    skills_extracted: int = 0
-    timestamp: str
+class RoleBatchIngestResponse(BaseModel):
+    role_id: str
+    role_name: str
+    total_postings: int
+    valid_postings: int
+    skills_extracted_total: int
+    skills_selected: int
+    selected_skills: List[str]
+    skill_frequency: Dict[str, int]
+    graph_updated: bool
+    readiness_hint: str
 
 JOBS_STORAGE_DIR = Path("data/jobs")
 JOBS_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
@@ -60,158 +52,152 @@ def save_jobs(jobs: List[Dict]):
 def generate_job_id() -> str:
     return f"job_{uuid.uuid4().hex[:12]}"
 
-@router.post("/ingest", response_model=JobResponse)
-async def ingest_job(request: JobIngestRequest):
-    if not request.url and not request.text:
+
+@router.post("/ingest-role-batch", response_model=RoleBatchIngestResponse)
+async def ingest_role_batch(request: RoleBatchIngestRequest):
+    cleaned_descriptions = [d.strip() for d in request.job_descriptions if d and d.strip()]
+    if len(cleaned_descriptions) < 2:
         raise HTTPException(
             status_code=400,
-            detail="Either 'url' or 'text' must be provided"
+            detail="At least 2 non-empty job descriptions are required."
         )
 
-    ingestion_service = get_job_ingestion_service()
-    
-    input_data = request.url or request.text
-    result = await ingestion_service.ingest(input_data)
+    role_name = request.role_name.strip()
+    role_id = normalize_id(role_name)
+    if not role_id:
+        raise HTTPException(status_code=400, detail="Invalid role_name provided.")
 
-    if not result.get("success"):
-        error_msg = result.get("error", "Failed to ingest job")
-        suggestion = result.get("suggestion", "")
-        
-        if suggestion:
-            raise HTTPException(
-                status_code=422,
-                detail=f"{error_msg}. {suggestion}"
-            )
-        else:
-            raise HTTPException(
-                status_code=422,
-                detail=error_msg
-            )
+    pipeline = ExtractionPipeline(groq_api_key=os.getenv("GROQ_API_KEY"))
+    gm = GraphManager()
 
-    job_data = result["data"]
-    job_id = generate_job_id()
-    
-    normalized = ingestion_service.normalize_job_for_extraction(job_data)
-    
-    extraction_result = await process_extraction(
-        normalized["title"],
-        normalized["description"],
-        job_data
-    )
+    skill_counter: Counter = Counter()
+    skill_categories: Dict[str, str] = {}
+    valid_postings = 0
+    total_extracted = 0
 
-    job_record = {
-        "job_id": job_id,
-        "input_type": result["input_type"],
-        "source": result.get("source"),
-        "url": result.get("url"),
-        "data": job_data,
-        "normalized": normalized,
-        "extraction_result": extraction_result,
-        "graph_updated": extraction_result.get("graph_updated", False),
-        "role_id": extraction_result.get("role_id"),
-        "skills_extracted": extraction_result.get("skills_extracted", 0),
-        "timestamp": datetime.utcnow().isoformat()
+    for description in cleaned_descriptions:
+        extraction = await pipeline.extract(role_name, description)
+        extraction_result = extraction.get("extraction_result")
+        if not extraction_result or not extraction_result.success:
+            continue
+
+        posting_skills = set()
+        for node in extraction_result.nodes:
+            node_type = node.type.value if hasattr(node.type, "value") else str(node.type)
+            if node_type != "skill":
+                continue
+            posting_skills.add(node.id)
+            if node.category and node.id not in skill_categories:
+                skill_categories[node.id] = node.category
+
+        if posting_skills:
+            valid_postings += 1
+            total_extracted += len(posting_skills)
+            for skill_id in posting_skills:
+                skill_counter[skill_id] += 1
+
+    if valid_postings == 0:
+        raise HTTPException(
+            status_code=422,
+            detail="Could not extract skills from the provided job descriptions."
+        )
+
+    selected_skills = [
+        skill_id
+        for skill_id, freq in skill_counter.items()
+        if freq >= request.min_frequency
+    ]
+    selected_skills.sort(key=lambda s: (-skill_counter[s], s))
+
+    if not selected_skills:
+        raise HTTPException(
+            status_code=422,
+            detail="No skills met the selected minimum frequency threshold."
+        )
+
+    role_metadata = {
+        "source": "synthetic_batch_input",
+        "postings_count": len(cleaned_descriptions),
+        "valid_postings": valid_postings,
+        "min_frequency": request.min_frequency,
+        "updated_at": datetime.utcnow().isoformat(),
     }
 
+    if gm.node_exists(role_id):
+        for _, target, data in list(gm.graph.out_edges(role_id, data=True)):
+            if gm.graph.nodes[target].get("type") == "skill" and data.get("type") == LinkType.REQUIRES.value:
+                gm.remove_edge(role_id, target)
+        gm.graph.nodes[role_id]["title"] = role_name
+        gm.graph.nodes[role_id]["type"] = NodeType.ROLE.value
+        gm.graph.nodes[role_id]["metadata"] = role_metadata
+    else:
+        gm.add_node(Node(
+            id=role_id,
+            type=NodeType.ROLE,
+            title=role_name,
+            metadata=role_metadata,
+        ))
+
+    for skill_id in selected_skills:
+        if not gm.node_exists(skill_id):
+            gm.add_node(Node(
+                id=skill_id,
+                type=NodeType.SKILL,
+                title=skill_id.replace("_", " ").title(),
+                category=skill_categories.get(skill_id),
+                metadata={
+                    "source": "synthetic_batch_input"
+                }
+            ))
+        if not gm.graph.has_edge(role_id, skill_id):
+            gm.add_edge(role_id, skill_id, LinkType.REQUIRES)
+
+    gm.save_graph()
+
     jobs = load_jobs()
-    jobs.insert(0, job_record)
+    jobs.insert(0, {
+        "job_id": generate_job_id(),
+        "input_type": "role_batch",
+        "source": "manual",
+        "data": {
+            "title": role_name,
+            "description": f"Role built from {len(cleaned_descriptions)} job descriptions",
+            "skills": selected_skills,
+        },
+        "normalized": {
+            "title": role_name,
+            "description": "",
+        },
+        "extraction_result": {
+            "success": True,
+            "graph_updated": True,
+            "role_id": role_id,
+            "skills_extracted": len(selected_skills),
+            "method_used": "batch_aggregate",
+            "tiers_attempted": ["llm", "dynamic_fallback", "human_loop"],
+            "fallback_triggered": False,
+        },
+        "graph_updated": True,
+        "role_id": role_id,
+        "skills_extracted": len(selected_skills),
+        "timestamp": datetime.utcnow().isoformat(),
+    })
     if len(jobs) > 100:
         jobs = jobs[:100]
     save_jobs(jobs)
 
-    return JobResponse(
-        job_id=job_id,
-        input_type=result["input_type"],
-        source=result.get("source"),
-        data=JobData(**job_data),
-        extraction_result=extraction_result,
-        graph_updated=extraction_result.get("graph_updated", False),
-        role_id=extraction_result.get("role_id"),
-        skills_extracted=extraction_result.get("skills_extracted", 0),
-        timestamp=job_record["timestamp"]
+    return RoleBatchIngestResponse(
+        role_id=role_id,
+        role_name=role_name,
+        total_postings=len(cleaned_descriptions),
+        valid_postings=valid_postings,
+        skills_extracted_total=total_extracted,
+        skills_selected=len(selected_skills),
+        selected_skills=selected_skills,
+        skill_frequency={k: int(v) for k, v in skill_counter.items()},
+        graph_updated=True,
+        readiness_hint="Role created. Go to Gap Analysis and select this role to view recommendations."
     )
-
-
-async def process_extraction(title: str, description: str, job_data: Dict) -> Dict:
-    pipeline = ExtractionPipeline(groq_api_key=os.getenv("GROQ_API_KEY"))
-    extraction = await pipeline.extract(title, description)
-
-    extraction_data = extraction.get("extraction_result")
-    
-    if extraction_data and extraction_data.success and extraction_data.nodes:
-        gm = GraphManager()
-        
-        role_nodes = [n for n in extraction_data.nodes if n.type == "role"]
-        skill_nodes = [n for n in extraction_data.nodes if n.type == "skill"]
-        
-        for node in role_nodes + skill_nodes:
-            existing = gm.get_node(node.id)
-            if not existing:
-                node_data = node.model_dump()
-                gm.add_node(Node(**node_data))
-        
-        role_id = role_nodes[0].id if role_nodes else None
-        
-        for link in extraction_data.links:
-            if not gm.graph.has_edge(link.source, link.target):
-                gm.add_edge(link.source, link.target, LinkType.REQUIRES)
-        
-        if role_id and skill_nodes:
-            for skill in skill_nodes:
-                if not gm.graph.has_edge(role_id, skill.id):
-                    gm.add_edge(role_id, skill.id, LinkType.REQUIRES)
-        
-        if job_data.get("company"):
-            company_id = f"company_{normalize_id(job_data['company'])}"
-            if not gm.get_node(company_id):
-                gm.add_node(Node(
-                    id=company_id,
-                    type="company",
-                    title=job_data["company"]
-                ))
-            if role_id and not gm.graph.has_edge(company_id, role_id):
-                gm.add_edge(company_id, role_id, LinkType.HIRES)
-        
-        if job_data.get("location"):
-            location_id = f"location_{normalize_id(job_data['location'])}"
-            if not gm.get_node(location_id):
-                gm.add_node(Node(
-                    id=location_id,
-                    type="location",
-                    title=job_data["location"]
-                ))
-        
-        if job_data.get("experience_level"):
-            exp_id = f"exp_{normalize_id(job_data['experience_level'])}"
-            if not gm.get_node(exp_id):
-                gm.add_node(Node(
-                    id=exp_id,
-                    type="experience_level",
-                    title=job_data["experience_level"]
-                ))
-            if role_id and not gm.graph.has_edge(role_id, exp_id):
-                gm.add_edge(role_id, exp_id, LinkType.REQUIRES)
-        
-        gm.save_graph()
-        
-        return {
-            "success": True,
-            "graph_updated": True,
-            "role_id": role_id,
-            "skills_extracted": len(skill_nodes),
-            "method_used": extraction.get("method_used"),
-            "tiers_attempted": extraction.get("tiers_attempted"),
-            "fallback_triggered": extraction.get("fallback_triggered", False)
-        }
-    
-    return {
-        "success": False,
-        "graph_updated": False,
-        "skills_extracted": 0,
-        "method_used": extraction.get("method_used", "none"),
-        "tiers_attempted": extraction.get("tiers_attempted", []),
-        "fallback_triggered": extraction.get("fallback_triggered", True)
-    }
 
 
 def normalize_id(text: str) -> str:
@@ -233,28 +219,6 @@ async def list_jobs(limit: int = 20, offset: int = 0):
     }
 
 
-@router.get("/{job_id}", response_model=Dict)
-async def get_job(job_id: str):
-    jobs = load_jobs()
-    for job in jobs:
-        if job["job_id"] == job_id:
-            return job
-    raise HTTPException(status_code=404, detail="Job not found")
-
-
-@router.delete("/{job_id}")
-async def delete_job(job_id: str):
-    jobs = load_jobs()
-    original_length = len(jobs)
-    jobs = [j for j in jobs if j["job_id"] != job_id]
-    
-    if len(jobs) == original_length:
-        raise HTTPException(status_code=404, detail="Job not found")
-    
-    save_jobs(jobs)
-    return {"message": f"Job {job_id} deleted", "deleted": True}
-
-
 @router.get("/roles", response_model=Dict)
 async def get_discovered_roles():
     gm = GraphManager()
@@ -272,44 +236,6 @@ async def get_discovered_skills():
     return {
         "skills": skills,
         "total": len(skills)
-    }
-
-
-@router.post("/validate")
-async def validate_job_input(request: JobIngestRequest):
-    ingestion_service = get_job_ingestion_service()
-    input_data = request.url or request.text
-    
-    input_type = ingestion_service.detect_input_type(input_data)
-    
-    if input_type in ["linkedin_url", "generic_url"]:
-        result = await ingestion_service.ingest(input_data)
-        if not result.get("success"):
-            return {
-                "valid": False,
-                "error": result.get("error"),
-                "input_type": input_type,
-                "suggestion": result.get("suggestion")
-            }
-        return {
-            "valid": True,
-            "input_type": input_type,
-            "preview": {
-                "title": result.get("data", {}).get("title"),
-                "company": result.get("data", {}).get("company"),
-                "description_length": len(result.get("data", {}).get("description", ""))
-            }
-        }
-    
-    validation = ingestion_service.validate_job_data({
-        "title": input_data.split('\n')[0][:100],
-        "description": input_data
-    })
-    
-    return {
-        "valid": validation["valid"],
-        "input_type": "raw_text",
-        "issues": validation["issues"]
     }
 
 
@@ -354,3 +280,25 @@ async def get_job_stats():
         },
         "extraction_methods": methods_used
     }
+
+
+@router.get("/{job_id}", response_model=Dict)
+async def get_job(job_id: str):
+    jobs = load_jobs()
+    for job in jobs:
+        if job["job_id"] == job_id:
+            return job
+    raise HTTPException(status_code=404, detail="Job not found")
+
+
+@router.delete("/{job_id}")
+async def delete_job(job_id: str):
+    jobs = load_jobs()
+    original_length = len(jobs)
+    jobs = [j for j in jobs if j["job_id"] != job_id]
+
+    if len(jobs) == original_length:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    save_jobs(jobs)
+    return {"message": f"Job {job_id} deleted", "deleted": True}

@@ -1,0 +1,122 @@
+1. Senior Backend Engineer (Python, FastAPI, Cloud)
+
+Role Summary  
+We are seeking a Senior Backend Engineer to design and deliver resilient, scalable backend services that power core product workflows. You will lead API architecture, data modeling, and platform reliability initiatives in a cloud-native environment.
+
+Key Responsibilities  
+- Design, build, and maintain RESTful APIs using Python and FastAPI  
+- Own database schema design, query optimization, and data integrity (PostgreSQL, Redis)  
+- Implement observability with logging, metrics, and tracing; drive incident resolution  
+- Partner with frontend, DevOps, and product teams to deliver end-to-end features  
+- Maintain high code quality through testing, code reviews, and engineering best practices
+
+Required Qualifications  
+- 5+ years of backend engineering experience  
+- Strong Python expertise and production API development experience  
+- Solid SQL knowledge with PostgreSQL performance tuning experience  
+- Hands-on experience with Docker, CI/CD, and cloud platforms (AWS/Azure/GCP)  
+- Proficiency in test automation (unit/integration testing) and Git workflows
+
+Preferred Qualifications  
+- Experience with distributed systems, event-driven architecture, or message queues  
+- Familiarity with security practices (OAuth2, JWT, API hardening)
+
+2. Full Stack Software Engineer (React, TypeScript, Node.js)
+
+Role Summary  
+We are hiring a Full Stack Engineer to build high-quality product features across frontend and backend systems. You will work closely with design and product teams to deliver intuitive UI experiences and robust service integrations.
+
+Key Responsibilities  
+- Build reusable UI components and feature flows in React and TypeScript  
+- Develop and maintain backend services in Node.js/Express  
+- Integrate APIs, authentication/authorization, and database operations  
+- Improve application performance, accessibility, and responsiveness  
+- Contribute to CI/CD pipelines, code quality standards, and technical documentation
+
+Required Qualifications  
+- 3+ years of full stack development experience  
+- Strong React + TypeScript skills and modern frontend architecture knowledge  
+- Backend development experience with Node.js and REST API design  
+- Working knowledge of relational databases (PostgreSQL/MySQL)  
+- Experience with testing frameworks and version control best practices
+
+Preferred Qualifications  
+- Experience with Next.js, GraphQL, and cloud deployment pipelines  
+- Familiarity with product analytics and A/B experimentation
+
+3. DevOps Engineer (Kubernetes, Terraform, Platform Reliability)
+
+Role Summary  
+We are looking for a DevOps Engineer to scale and secure our infrastructure while accelerating software delivery. You will own CI/CD, cloud automation, and reliability engineering practices across environments.
+
+Key Responsibilities  
+- Build and manage CI/CD workflows for build, test, and deployment automation  
+- Operate containerized workloads with Docker and Kubernetes  
+- Provision infrastructure using Terraform and infrastructure-as-code principles  
+- Implement monitoring/alerting and optimize SLO/SLA compliance  
+- Drive operational excellence through automation, runbooks, and postmortems
+
+Required Qualifications  
+- 4+ years in DevOps, SRE, or platform engineering roles  
+- Strong Linux and scripting skills (Bash/Python)  
+- Production experience with Kubernetes and cloud platforms (AWS/Azure/GCP)  
+- Experience with CI/CD tools (GitHub Actions, Jenkins, GitLab CI)  
+- Familiarity with observability stacks (Prometheus, Grafana, ELK/OpenTelemetry)
+
+Preferred Qualifications  
+- Security/compliance experience (IAM, secrets management, policy-as-code)  
+- Experience with disaster recovery and high-availability architectures
+
+4. Data Analyst / Junior Data Scientist (SQL, Python, Analytics)
+
+Role Summary  
+We are seeking a Data Analyst / Junior Data Scientist to convert data into actionable insights that influence business and product decisions. You will partner with cross-functional teams to deliver reporting, experimentation analysis, and predictive insights.
+
+Key Responsibilities  
+- Extract, transform, and analyze data using SQL and Python (Pandas)  
+- Build dashboards and KPI reporting for business stakeholders  
+- Conduct ad hoc analyses and communicate findings clearly to non-technical audiences  
+- Support A/B testing design, analysis, and interpretation  
+- Ensure data quality and contribute to metrics governance
+
+Required Qualifications  
+- 2+ years of experience in analytics, BI, or data science-related work  
+- Strong SQL skills and practical Python data analysis experience  
+- Understanding of statistics, hypothesis testing, and experimentation concepts  
+- Experience with BI tools (Power BI/Tableau/Looker)  
+- Strong communication and stakeholder management skills
+
+Preferred Qualifications  
+- Exposure to machine learning workflows (scikit-learn)  
+- Experience with data pipelines, cloud data warehouses, or ETL tooling
+
+
+
+
+Perfect, here are 4 industry-standard job descriptions for the same role: Backend Python Engineer.
+
+1. Backend Python Engineer (API & Microservices Focus)  
+We are looking for a Backend Python Engineer to design and build high-performance APIs and microservices that power critical product features. You will work with Python, FastAPI, PostgreSQL, and Redis to deliver scalable and reliable backend systems.  
+Key responsibilities include service design, API versioning, database optimization, and production support. You will collaborate closely with frontend engineers, DevOps, and product teams to ship secure, maintainable features.  
+Required skills: Python, FastAPI/Flask/Django, SQL, Docker, Git, CI/CD, cloud fundamentals (AWS/Azure/GCP).  
+Preferred: Message queues (Kafka/RabbitMQ), caching strategies, and observability tools.
+
+2. Backend Python Engineer (Data-Intensive Systems)  
+We are hiring a Backend Python Engineer to build data-intensive backend workflows and service integrations. The role involves developing robust REST APIs, ETL-style background jobs, and data pipelines for analytics-driven products.  
+You will own backend logic, optimize query performance in PostgreSQL, and ensure service reliability under high-volume workloads. You should be comfortable writing clean, testable code and participating in architecture discussions.  
+Required skills: Python, SQL, API design, asynchronous processing, unit/integration testing, Docker.  
+Preferred: Experience with Pandas, Celery, Redis, and cloud-native deployment patterns.
+
+3. Backend Python Engineer (Platform & Reliability)  
+Join our platform team as a Backend Python Engineer to strengthen system reliability, performance, and security. You will build backend services, improve deployment pipelines, and enforce engineering best practices across environments.  
+Responsibilities include implementing resilient service patterns, improving logs/metrics/tracing, reducing latency, and troubleshooting production incidents. You will contribute to code reviews, incident postmortems, and platform automation initiatives.  
+Required skills: Python, FastAPI, PostgreSQL, Linux, Git, CI/CD, Docker, cloud services.  
+Preferred: Kubernetes, Terraform, OpenTelemetry/Prometheus/Grafana, and SRE practices.
+
+4. Backend Python Engineer (Product Engineering)  
+We are seeking a product-minded Backend Python Engineer to build features that directly impact customer experience. You will partner with product managers and frontend developers to implement scalable backend capabilities, including authentication, role-based access, reporting, and integrations.  
+You should be strong in API architecture, schema design, and performance optimization, with a focus on maintainability and developer experience.  
+Required skills: Python, REST API development, PostgreSQL/MySQL, Redis, testing frameworks, Git workflows.  
+Preferred: Experience with OAuth2/JWT, third-party API integrations, and secure coding standards.
+
+If you want, I can next generate 4 more for the same role but with different seniority levels (Junior, Mid, Senior, Lead) so your extraction pipeline sees wider variation.

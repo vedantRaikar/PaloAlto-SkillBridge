@@ -8,7 +8,7 @@ Generates the fastest path to job readiness by prioritizing:
 """
 
 from typing import List, Dict, Set, Optional, Tuple
-from app.services.knowledge_sources.onet_integration import SKILL_TO_COURSES, SKILL_ALIASES
+from app.services.knowledge_sources.onet_integration import SKILL_TO_COURSES, SKILL_ALIASES, get_skill_mapper
 from app.services.learning_path_generator import SKILL_PREREQUISITES, SKILL_LEVELS, SKILL_CATEGORIES
 
 # Skill impact scores (job market value 1-10)
@@ -132,6 +132,7 @@ class FastTrackGenerator:
     
     def __init__(self):
         self._skill_map: Dict[str, Set[str]] = {}
+        self._skill_mapper = get_skill_mapper()
         self._build_skill_map()
     
     def _build_skill_map(self):
@@ -152,6 +153,10 @@ class FastTrackGenerator:
     def _get_course_duration(self, skill: str) -> int:
         """Get fastest course duration in hours."""
         skill_norm = self._normalize_skill(skill)
+
+        runtime_courses = self._skill_mapper.get_learning_path(skill_norm, refresh_live=True)
+        if runtime_courses:
+            return min(c.get("duration_hours", 20) for c in runtime_courses)
         
         if skill_norm in FAST_TRACK_COURSES:
             courses = FAST_TRACK_COURSES[skill_norm]
@@ -167,6 +172,14 @@ class FastTrackGenerator:
     def _get_fastest_courses(self, skill: str, max_results: int = 2) -> List[Dict]:
         """Get fastest courses for a skill (prioritize free + short)."""
         skill_norm = self._normalize_skill(skill)
+        runtime_courses = self._skill_mapper.get_learning_path(skill_norm, refresh_live=True)
+        if runtime_courses:
+            sorted_runtime = sorted(runtime_courses, key=lambda c: (
+                0 if c.get("is_free") else 1,
+                c.get("duration_hours", 20),
+            ))
+            return sorted_runtime[:max_results]
+
         results = []
         
         if skill_norm in FAST_TRACK_COURSES:

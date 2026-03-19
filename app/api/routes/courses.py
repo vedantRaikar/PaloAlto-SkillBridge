@@ -66,7 +66,13 @@ async def get_courses_for_skill(skill_id: str):
 @router.get("/providers")
 async def get_course_providers():
     aggregator = get_course_aggregator()
-    providers = list(aggregator.scrapers.keys())
+    # Support both legacy aggregators (with `scrapers`) and the current
+    # O*NET-backed aggregator (without scraper objects).
+    if hasattr(aggregator, "scrapers") and getattr(aggregator, "scrapers"):
+        providers = list(aggregator.scrapers.keys())
+    else:
+        from app.services.course_discovery.aggregator import FALLBACK_COURSES
+        providers = sorted({c.get("provider", "unknown") for c in FALLBACK_COURSES if c.get("provider")})
     return {
         "providers": providers,
         "total": len(providers)

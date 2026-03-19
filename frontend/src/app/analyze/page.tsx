@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { roadmapApi, learningApi } from '@/lib/api'
+import { roadmapApi, learningApi, profileApi, type UserKnowledgeGraph } from '@/lib/api'
 import { useUserStore } from '@/stores/userStore'
 import { CourseCard, CourseCardSkeleton } from '@/components/course-card'
 import { CertificationCard, CertificationCardSkeleton } from '@/components/certification-card'
@@ -45,6 +45,9 @@ function AnalyzePageContent() {
   const [roles, setRoles] = useState<Role[]>([])
   const [gapAnalysis, setGapAnalysis] = useState<GapAnalysis | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [graphLoading, setGraphLoading] = useState(false)
+  const [userGraph, setUserGraph] = useState<UserKnowledgeGraph | null>(null)
+  const [graphError, setGraphError] = useState('')
   const [learningResources, setLearningResources] = useState<LearningResources>({
     courses: [],
     certifications: [],
@@ -120,6 +123,21 @@ function AnalyzePageContent() {
     } catch (error) {
       console.error('Failed to load learning resources:', error)
       setLearningResources(prev => ({ ...prev, loading: false }))
+    }
+  }
+
+  const loadUserGraphPreview = async () => {
+    if (!userId) return
+    setGraphLoading(true)
+    setGraphError('')
+    try {
+      const graph = await profileApi.graph(userId, 2)
+      setUserGraph(graph)
+    } catch (error: any) {
+      const message = error?.response?.data?.detail || 'Failed to load your knowledge graph preview.'
+      setGraphError(message)
+    } finally {
+      setGraphLoading(false)
     }
   }
 
@@ -204,6 +222,59 @@ function AnalyzePageContent() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>My Knowledge Graph</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-3 items-center">
+              <Button onClick={loadUserGraphPreview} disabled={graphLoading}>
+                {graphLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading Graph...
+                  </>
+                ) : (
+                  'View My Graph Preview'
+                )}
+              </Button>
+              {userGraph && (
+                <Button variant="outline" onClick={() => router.push('/graph')}>
+                  Open Full Graph View
+                </Button>
+              )}
+            </div>
+
+            {graphError && (
+              <p className="text-sm text-red-600">{graphError}</p>
+            )}
+
+            {userGraph && (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">Nodes: {userGraph.node_count}</Badge>
+                  <Badge variant="secondary">Edges: {userGraph.edge_count}</Badge>
+                  <Badge variant="secondary">Depth: {userGraph.depth}</Badge>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium mb-2">Connected Skills (sample)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {userGraph.nodes
+                      .filter((n) => n.type === 'skill')
+                      .slice(0, 12)
+                      .map((n) => (
+                        <Badge key={n.id} variant="outline" className="capitalize">
+                          {(n.title || n.id).replace(/_/g, ' ')}
+                        </Badge>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {gapAnalysis && gapAnalysis.readiness_score < 100 && (
           <FastTrackPath className="mb-8" />
