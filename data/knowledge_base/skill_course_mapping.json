@@ -1,0 +1,808 @@
+{
+  "wikidata_gin": {
+    "courses": [
+      {
+        "title": "Westcraigs Inn, Craiginn Terrace, Blackridge",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Westcraigs Inn, Craiginn Terrace, Blackridge",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for gin",
+        "source": "wikidata"
+      },
+      {
+        "title": "The Old Swinging Gate Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=The Old Swinging Gate Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for gin",
+        "source": "wikidata"
+      },
+      {
+        "title": "The Engine Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=The Engine Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for gin",
+        "source": "wikidata"
+      },
+      {
+        "title": "The Gin Trapp Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=The Gin Trapp Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for gin",
+        "source": "wikidata"
+      },
+      {
+        "title": "Mekiki-no-Ginji",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Mekiki-no-Ginji",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified izakaya for gin",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773992397.0538359,
+    "source": "wikidata"
+  },
+  "wikidata_ai": {
+    "courses": [
+      {
+        "title": "Australia Dairy Company",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Australia Dairy Company",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified cha chaan teng for ai",
+        "source": "wikidata"
+      },
+      {
+        "title": "Castel Pietraio",
+        "provider": "wikidata",
+        "url": "https://www.touringclub.it/destinazione/dormire/agriturismo/112575",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for ai",
+        "source": "wikidata"
+      },
+      {
+        "title": "Blair House",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Blair House",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for ai",
+        "source": "wikidata"
+      },
+      {
+        "title": "Taiparoro House",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Taiparoro House",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for ai",
+        "source": "wikidata"
+      },
+      {
+        "title": "Main Street Bed and Breakfast & Bistro",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Main Street Bed and Breakfast & Bistro",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for ai",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773992399.7151954,
+    "source": "wikidata"
+  },
+  "wikidata_data_pipeline": {
+    "courses": [],
+    "timestamp": 1773994496.1135795,
+    "source": "wikidata"
+  },
+  "wikidata_etl": {
+    "courses": [
+      {
+        "title": "Beetle and Wedge",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Beetle and Wedge",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for etl",
+        "source": "wikidata"
+      },
+      {
+        "title": "McDonald's Metland Transyogi",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=McDonald's Metland Transyogi",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for etl",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773992409.0719585,
+    "source": "wikidata"
+  },
+  "wikidata_integration_test": {
+    "courses": [],
+    "timestamp": 1773994511.7113414,
+    "source": "wikidata"
+  },
+  "wikidata_kafka": {
+    "courses": [],
+    "timestamp": 1773994513.8419657,
+    "source": "wikidata"
+  },
+  "wikidata_hadoop": {
+    "courses": [],
+    "timestamp": 1773992446.2032733,
+    "source": "wikidata"
+  },
+  "wikidata_pandas": {
+    "courses": [],
+    "timestamp": 1773994533.150929,
+    "source": "wikidata"
+  },
+  "wikidata_sql": {
+    "courses": [],
+    "timestamp": 1773992449.921715,
+    "source": "wikidata"
+  },
+  "wikidata_message_queue": {
+    "courses": [],
+    "timestamp": 1773994523.8004222,
+    "source": "wikidata"
+  },
+  "wikidata_microservices": {
+    "courses": [],
+    "timestamp": 1773994528.8830857,
+    "source": "wikidata"
+  },
+  "wikidata_opentelemetry": {
+    "courses": [],
+    "timestamp": 1773994530.0465336,
+    "source": "wikidata"
+  },
+  "wikidata_prometheus": {
+    "courses": [],
+    "timestamp": 1773994535.4164228,
+    "source": "wikidata"
+  },
+  "wikidata_github_actions": {
+    "courses": [],
+    "timestamp": 1773993543.9695134,
+    "source": "wikidata"
+  },
+  "wikidata_rabbitmq": {
+    "courses": [],
+    "timestamp": 1773994537.7296436,
+    "source": "wikidata"
+  },
+  "wikidata_rest": {
+    "courses": [
+      {
+        "title": "Restful -Stays  Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Restful -Stays  Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for rest",
+        "source": "wikidata"
+      },
+      {
+        "title": "Kings Rest Bed  & Breakfas",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Kings Rest Bed  & Breakfas",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for rest",
+        "source": "wikidata"
+      },
+      {
+        "title": "Troll Garden Restaurant",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Troll Garden Restaurant",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for rest",
+        "source": "wikidata"
+      },
+      {
+        "title": "Captain's Rest",
+        "provider": "wikidata",
+        "url": "https://thedesignfiles.net/2019/12/stays-captains-rest",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for rest",
+        "source": "wikidata"
+      },
+      {
+        "title": "Captain's Rest",
+        "provider": "wikidata",
+        "url": "https://topaustralianhomes.com/features/captains-rest/",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for rest",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773992464.1458168,
+    "source": "wikidata"
+  },
+  "wikidata_sre": {
+    "courses": [
+      {
+        "title": "Gasthof Zur Alten Post (Herzogsreut)",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Gasthof Zur Alten Post (Herzogsreut)",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for sre",
+        "source": "wikidata"
+      },
+      {
+        "title": "Bahnhofsrestauration",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Bahnhofsrestauration",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified station restaurant for sre",
+        "source": "wikidata"
+      },
+      {
+        "title": "Biergarten Oberkonnersreuther Stra\u00dfe 6 in Bayreuth",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Biergarten Oberkonnersreuther Stra\u00dfe 6 in Bayreuth",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified beer garden for sre",
+        "source": "wikidata"
+      },
+      {
+        "title": "Gamlastovo Gardsrestaurant",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Gamlastovo Gardsrestaurant",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for sre",
+        "source": "wikidata"
+      },
+      {
+        "title": "Warung Lesehan Yogyakarta - Tulusrejo",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Warung Lesehan Yogyakarta - Tulusrejo",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for sre",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773992466.5471053,
+    "source": "wikidata"
+  },
+  "wikidata_testing": {
+    "courses": [],
+    "timestamp": 1773994562.8355973,
+    "source": "wikidata"
+  },
+  "wikidata_docker": {
+    "courses": [],
+    "timestamp": 1773994573.7449758,
+    "source": "wikidata"
+  },
+  "wikidata_aws": {
+    "courses": [
+      {
+        "title": "The Black Swan Inn And Maws Stores",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=The Black Swan Inn And Maws Stores",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for aws",
+        "source": "wikidata"
+      },
+      {
+        "title": "Old Cross Saws Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Old Cross Saws Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for aws",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773993095.4903564,
+    "source": "wikidata"
+  },
+  "wikidata_azure": {
+    "courses": [],
+    "timestamp": 1773994577.6960635,
+    "source": "wikidata"
+  },
+  "wikidata_kubernetes": {
+    "courses": [],
+    "timestamp": 1773994518.8563352,
+    "source": "wikidata"
+  },
+  "wikidata_cloud": {
+    "courses": [
+      {
+        "title": "Cloud Vista Asaba",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Cloud Vista Asaba",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for cloud",
+        "source": "wikidata"
+      },
+      {
+        "title": "Cloud 9 Bar & Grill",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Cloud 9 Bar & Grill",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for cloud",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773993145.5365155,
+    "source": "wikidata"
+  },
+  "wikidata_excel": {
+    "courses": [
+      {
+        "title": "Excelsior",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Excelsior",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for excel",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773993423.1545575,
+    "source": "wikidata"
+  },
+  "wikidata_gitlab_ci": {
+    "courses": [],
+    "timestamp": 1773993540.2870998,
+    "source": "wikidata"
+  },
+  "wikidata_jenkins": {
+    "courses": [],
+    "timestamp": 1773993542.3191009,
+    "source": "wikidata"
+  },
+  "wikidata_postgres": {
+    "courses": [],
+    "timestamp": 1773994475.5243835,
+    "source": "wikidata"
+  },
+  "wikidata_ci/cd": {
+    "courses": [],
+    "timestamp": 1773994480.010774,
+    "source": "wikidata"
+  },
+  "wikidata_fastapi": {
+    "courses": [],
+    "timestamp": 1773994484.2410653,
+    "source": "wikidata"
+  },
+  "wikidata_redis": {
+    "courses": [],
+    "timestamp": 1773994489.650517,
+    "source": "wikidata"
+  },
+  "wikidata_devops": {
+    "courses": [],
+    "timestamp": 1773994500.0334113,
+    "source": "wikidata"
+  },
+  "wikidata_django": {
+    "courses": [],
+    "timestamp": 1773994502.9221804,
+    "source": "wikidata"
+  },
+  "wikidata_flask": {
+    "courses": [
+      {
+        "title": "Beaker & Flask",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Beaker & Flask",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for flask",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773993497.170923,
+    "source": "wikidata"
+  },
+  "wikidata_gcp": {
+    "courses": [],
+    "timestamp": 1773994505.8594255,
+    "source": "wikidata"
+  },
+  "wikidata_go": {
+    "courses": [
+      {
+        "title": "The Grey Goat Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=The Grey Goat Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for go",
+        "source": "wikidata"
+      },
+      {
+        "title": "former Gasthof zum goldenen Adler",
+        "provider": "wikidata",
+        "url": "https://www.ag.ch/denkmalpflege/suche/detail.aspx?ID=25284",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for go",
+        "source": "wikidata"
+      },
+      {
+        "title": "Wagon Inn, High Street, Aberlady",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Wagon Inn, High Street, Aberlady",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for go",
+        "source": "wikidata"
+      },
+      {
+        "title": "The Green Dragon Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=The Green Dragon Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for go",
+        "source": "wikidata"
+      },
+      {
+        "title": "The Goat Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=The Goat Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified inn for go",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773993502.0934284,
+    "source": "wikidata"
+  },
+  "wikidata_grafana": {
+    "courses": [],
+    "timestamp": 1773994508.1381328,
+    "source": "wikidata"
+  },
+  "wikidata_linux": {
+    "courses": [],
+    "timestamp": 1773994522.2874997,
+    "source": "wikidata"
+  },
+  "wikidata_microservice": {
+    "courses": [],
+    "timestamp": 1773994526.840046,
+    "source": "wikidata"
+  },
+  "wikidata_scala": {
+    "courses": [],
+    "timestamp": 1773994542.4881005,
+    "source": "wikidata"
+  },
+  "wikidata_java": {
+    "courses": [
+      {
+        "title": "Grab-a-Java",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Grab-a-Java",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified fast food restaurant chain for java",
+        "source": "wikidata"
+      },
+      {
+        "title": "Java Barn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Java Barn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for java",
+        "source": "wikidata"
+      },
+      {
+        "title": "McDonald's Java Supermall",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=McDonald's Java Supermall",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for java",
+        "source": "wikidata"
+      },
+      {
+        "title": "Java Moose",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Java Moose",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for java",
+        "source": "wikidata"
+      },
+      {
+        "title": "Javatri",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Javatri",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified restaurant for java",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773993553.582023,
+    "source": "wikidata"
+  },
+  "wikidata_security": {
+    "courses": [],
+    "timestamp": 1773994560.8223956,
+    "source": "wikidata"
+  },
+  "wikidata_databases": {
+    "courses": [],
+    "timestamp": 1773994565.4132364,
+    "source": "wikidata"
+  },
+  "wikidata_ansible": {
+    "courses": [],
+    "timestamp": 1773994536.620001,
+    "source": "wikidata"
+  },
+  "wikidata_r": {
+    "courses": [
+      {
+        "title": "Australia Dairy Company",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Australia Dairy Company",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified cha chaan teng for r",
+        "source": "wikidata"
+      },
+      {
+        "title": "Madrona Manor",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Madrona Manor",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for r",
+        "source": "wikidata"
+      },
+      {
+        "title": "Dog Bark Park Inn",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Dog Bark Park Inn",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for r",
+        "source": "wikidata"
+      },
+      {
+        "title": "Gustav Freiwald House",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Gustav Freiwald House",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for r",
+        "source": "wikidata"
+      },
+      {
+        "title": "Robert F. Lytle House",
+        "provider": "wikidata",
+        "url": "https://www.wikidata.org/wiki/Special:Search?search=Robert F. Lytle House",
+        "instructor": "Wikidata Community",
+        "duration_hours": 20,
+        "level": "beginner",
+        "is_free": true,
+        "rating": 4.5,
+        "num_students": 0,
+        "description": "Community-verified bed and breakfast for r",
+        "source": "wikidata"
+      }
+    ],
+    "timestamp": 1773994516.1760004,
+    "source": "wikidata"
+  },
+  "wikidata_c++": {
+    "courses": [],
+    "timestamp": 1773994546.4624999,
+    "source": "wikidata"
+  },
+  "wikidata_kotlin": {
+    "courses": [],
+    "timestamp": 1773994550.061904,
+    "source": "wikidata"
+  },
+  "wikidata_php": {
+    "courses": [],
+    "timestamp": 1773994556.0483263,
+    "source": "wikidata"
+  }
+}

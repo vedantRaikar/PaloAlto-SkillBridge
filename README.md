@@ -1,4 +1,3 @@
-# README Template
 
 Candidate Name: Gokuldas Vedant Raikar
 
@@ -51,8 +50,8 @@ AI Disclosure:
 
 
 - Give one example of a suggestion you rejected or changed:
-	- I rejected relying only on static hardcoded skill-to-course mappings. I changed the design to include dynamic discovery (Wikidata/fallback chain) for better coverage.
-  - I rejected relying only on static hardcoded skill-to-course mappings. I changed the design to include dynamic discovery (Wikidata/fallback chain) for better coverage.
+	- I rejected relying only on static hardcoded skill-to-course mappings. I changed the design to include dynamic discovery (DuckDuckGo/fallback chain) for better coverage.
+  - I rejected relying only on static hardcoded skill-to-course mappings. I changed the design to include dynamic discovery (DuckDuckGo/fallback chain) for better coverage.
   - I rejected leaving print-based error handling in services. I switched to centralized structured logging for better debugging and observability.
   - rejected keeping venv/pip-style setup in the README because my workflow uses uv. I updated commands to uv sync and uv run 
   - I rejected using a test command that assumes a frontend test script exists (npm run test) since it was not configured. I changed it to npm run lint for a valid quality check.
@@ -66,10 +65,13 @@ Tradeoffs & Prioritization:
 	- Introduce PostgreSQL + graph persistence strategy for better scale.
 	- Add recommendation ranking signals (freshness, user preference, quality metrics).
 	- Add frontend integration tests and end-to-end observability dashboards.
-  - Dockerize the application and create a docker-compose file for orchestration
-  - Develope CI pipeline with PR and Main merge build
-  - Will implement API Access control through Azure AD app roles 
-  - Develope Integration Test cases via Postman and Running in Postman
+	- Dockerize the application and create a docker-compose file for orchestration
+	- Develope CI pipeline with PR and Main merge build
+	- Will implement API Access control through Azure AD app roles 
+	- Develope Integration Test cases via Postman and Running in Postman
+	- Introduce Email Service and Report Service using Kafka
+	- Optimize the code written by AI (Find and Implement optimisation Gaps)
+
 - Known limitations
 	- Dynamic external sources can vary in quality and response time.
 	- JSON-backed graph is not ideal for concurrent high-write workloads.

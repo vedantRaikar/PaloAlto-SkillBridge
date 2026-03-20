@@ -55,12 +55,18 @@ class SemanticSkillMatcher:
         if self._model is None:
             try:
                 from sentence_transformers import SentenceTransformer
+                logger.info("Loading sentence-transformer model '%s'...", self._model_name)
                 self._model = SentenceTransformer(self._model_name)
+                logger.info("Model '%s' loaded successfully", self._model_name)
                 self._precompute_embeddings()
             except Exception as e:
                 logger.warning("Could not load embedding model: %s", e)
                 return None
         return self._model
+
+    def warmup(self):
+        """Eagerly load model and precompute embeddings so first request is fast."""
+        _ = self.model
     
     def _precompute_embeddings(self):
         """Pre-compute embeddings for all canonical skills"""

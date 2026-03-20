@@ -86,6 +86,7 @@ class LearningPathGenerator:
     
     def __init__(self):
         self.graph_manager = GraphManager()
+        self._prereq_memo: Dict[str, List[str]] = {}
         self._build_skill_dependencies()
     
     def _build_skill_dependencies(self):
@@ -133,7 +134,10 @@ class LearningPathGenerator:
         return list(self._prerequisites.get(skill_lower, set()))
     
     def get_all_prerequisites(self, skill: str, visited: Optional[Set[str]] = None) -> List[str]:
-        """Get all prerequisites recursively (transitive closure)."""
+        """Get all prerequisites recursively (transitive closure) with memoization."""
+        if skill in self._prereq_memo and visited is None:
+            return list(self._prereq_memo[skill])
+
         if visited is None:
             visited = set()
         
@@ -147,8 +151,12 @@ class LearningPathGenerator:
         for prereq in direct_prereqs:
             all_prereqs.add(prereq)
             all_prereqs.update(self.get_all_prerequisites(prereq, visited))
-        
-        return list(all_prereqs)
+
+        result = list(all_prereqs)
+        # Only cache top-level calls (not recursive sub-calls)
+        if len(visited) == 1 or skill not in self._prereq_memo:
+            self._prereq_memo[skill] = result
+        return result
     
     def topological_sort_skills(self, skills: List[str]) -> List[str]:
         """
@@ -158,11 +166,14 @@ class LearningPathGenerator:
         skill_set = set(s.lower() for s in skills)
         result = []
         remaining = set(skill_set)
-        
+
+        # Pre-compute prerequisites for all skills once
+        prereq_map = {s: self.get_prerequisites(s) for s in skill_set}
+        prereq_count = {s: len(prereq_map[s]) for s in skill_set}
+
         def can_learn(skill: str) -> bool:
-            prereqs = self.get_prerequisites(skill)
-            return all(p.lower() in result or p.lower() not in remaining 
-                      for p in prereqs if p.lower() in skill_set)
+            return all(p.lower() in result or p.lower() not in remaining
+                      for p in prereq_map[skill] if p.lower() in skill_set)
         
         max_iterations = len(skills) * 2
         iteration = 0
@@ -175,7 +186,7 @@ class LearningPathGenerator:
                 result.extend(remaining_list)
                 break
             
-            learnable.sort(key=lambda s: len(self.get_prerequisites(s)))
+            learnable.sort(key=lambda s: prereq_count[s])
             result.append(learnable[0])
             remaining.remove(learnable[0])
             iteration += 1

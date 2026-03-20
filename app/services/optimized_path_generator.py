@@ -88,6 +88,7 @@ class DijkstraPathFinder:
     def __init__(self):
         self.adjacency: Dict[str, List[Tuple[str, float]]] = {}
         self.skill_durations: Dict[str, float] = {}
+        self._duration_cache: Dict[str, float] = {}
         self.skill_mapper = get_skill_mapper()
         self._build_skill_map()
     
@@ -103,20 +104,29 @@ class DijkstraPathFinder:
         return skill.lower().replace(" ", "_").replace("-", "_")
     
     def _get_duration(self, skill: str) -> float:
-        """Get fastest course duration for a skill."""
+        """Get fastest course duration for a skill. Uses cached data to avoid live API calls."""
         skill_norm = self._normalize_skill(skill)
 
-        runtime_courses = self.skill_mapper.get_learning_path(skill_norm, refresh_live=True)
-        if runtime_courses:
-            return min(c.get("duration_hours", 20) for c in runtime_courses)
-        
+        if skill_norm in self._duration_cache:
+            return self._duration_cache[skill_norm]
+
+        duration = self._compute_duration(skill_norm)
+        self._duration_cache[skill_norm] = duration
+        return duration
+
+    def _compute_duration(self, skill_norm: str) -> float:
+        """Compute duration from static/cached sources (no live API calls)."""
         if skill_norm in FAST_TRACK_COURSES:
             return min(c[2] for c in FAST_TRACK_COURSES[skill_norm])
-        
+
         if skill_norm in SKILL_TO_COURSES:
             courses = SKILL_TO_COURSES[skill_norm]
             if courses:
                 return min(c.get("duration_hours", 20) for c in courses)
+
+        cached_courses = self.skill_mapper.get_learning_path(skill_norm, refresh_live=False)
+        if cached_courses:
+            return min(c.get("duration_hours", 20) for c in cached_courses)
         
         return 20.0
     
@@ -322,6 +332,7 @@ class OptimizedPathGenerator:
     def __init__(self):
         self.path_finder = DijkstraPathFinder()
         self.skill_mapper = get_skill_mapper()
+        self._course_cache: Dict[str, List[Dict]] = {}
     
     def generate_optimized_paths(
         self,
@@ -393,12 +404,16 @@ class OptimizedPathGenerator:
         }
     
     def _get_courses(self, skill: str) -> List[Dict]:
-        """Get courses for a skill."""
+        """Get courses for a skill (cached per session)."""
         skill_norm = self.path_finder._normalize_skill(skill)
 
-        runtime_courses = self.skill_mapper.get_learning_path(skill_norm, refresh_live=True)
-        if runtime_courses:
-            return runtime_courses[:3]
+        if skill_norm in self._course_cache:
+            return self._course_cache[skill_norm]
+
+        cached_courses = self.skill_mapper.get_learning_path(skill_norm, refresh_live=False)
+        if cached_courses:
+            self._course_cache[skill_norm] = cached_courses[:3]
+            return cached_courses[:3]
 
         courses = []
         if skill_norm in FAST_TRACK_COURSES:
@@ -415,8 +430,10 @@ class OptimizedPathGenerator:
             for c in SKILL_TO_COURSES[skill_norm][:2]:
                 if {"title": c.get("title")} not in [{"title": x["title"]} for x in courses]:
                     courses.append(c)
-        
-        return courses[:3]
+
+        result = courses[:3]
+        self._course_cache[skill_norm] = result
+        return result
     
     def _get_url(self, provider: str, skill: str) -> str:
         """Get course URL."""

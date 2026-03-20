@@ -1,4 +1,5 @@
 import json
+import asyncio
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 from pathlib import Path
@@ -56,8 +57,8 @@ class LearningResourceManager:
     async def discover_courses_for_skills(self, request: CourseDiscoverRequest) -> CourseDiscoverResponse:
         courses_by_skill = {}
         recommended_paths = []
-        
-        for skill in request.skills:
+
+        async def _search_skill(skill: str):
             try:
                 response = await self.course_aggregator.search_all(
                     skill=skill,
@@ -65,19 +66,29 @@ class LearningResourceManager:
                     free_only=request.budget == "free",
                     providers=request.preferred_providers,
                 )
-                
                 courses = response.courses
                 if request.budget == "paid":
                     courses = [c for c in courses if not c.is_free]
-                
-                courses_by_skill[skill] = courses
-                
-                for course in courses:
-                    self._add_course_to_graph(course)
-                
+                return skill, courses
             except Exception as e:
                 logger.exception("Error discovering courses for skill %s", skill)
-                courses_by_skill[skill] = []
+                return skill, []
+
+        results = await asyncio.gather(*[_search_skill(s) for s in request.skills])
+
+        all_courses = []
+        for skill, courses in results:
+            courses_by_skill[skill] = courses
+            all_courses.extend(courses)
+
+        # Batch graph additions — save once at the end
+        any_added = False
+        for course in all_courses:
+            if not self.gm.get_node(course.id):
+                self._add_course_to_graph_nosave(course)
+                any_added = True
+        if any_added:
+            self.gm.save_graph()
         
         recommended_paths = self._generate_learning_paths(request.skills)
         
@@ -179,61 +190,64 @@ class LearningResourceManager:
             logger.exception("Error searching courses for skill %s", skill_id)
             return []
     
-    def _add_course_to_graph(self, course: Course) -> str:
+    def _add_course_to_graph_nosave(self, course: Course) -> str:
+        """Add course to graph without saving (caller must save)."""
         course_id = course.id
-        
-        if not self.gm.get_node(course_id):
-            course_node = Node(
-                id=course_id,
-                type=NodeType.COURSE,
-                title=course.title,
-                category=course.provider,
-                metadata={
-                    "provider": course.provider,
-                    "url": course.url,
-                    "instructor": course.instructor,
-                    "duration_hours": course.duration_hours,
-                    "rating": course.rating,
-                    "num_students": course.num_students,
-                    "price": course.price if not course.is_free else 0,
-                    "is_free": course.is_free,
-                    "level": course.level,
-                    "thumbnail_url": course.thumbnail_url,
-                    "skills_taught": course.skills_taught,
-                }
-            )
-            self.gm.add_node(course_node)
-            
-            for skill_id in course.skills_taught or []:
-                if not self.gm.get_node(skill_id):
-                    skill_node = Node(
-                        id=skill_id,
-                        type=NodeType.SKILL,
-                        title=skill_id.replace("_", " ").title(),
-                    )
-                    self.gm.add_node(skill_node)
-                
-                if not self.gm.graph.has_edge(course_id, skill_id):
-                    self.gm.add_edge(course_id, skill_id, LinkType.TEACHES)
-            
-            provider_id = f"provider_{course.provider}"
-            if not self.gm.get_node(provider_id):
+        course_node = Node(
+            id=course_id,
+            type=NodeType.COURSE,
+            title=course.title,
+            category=course.provider,
+            metadata={
+                "provider": course.provider,
+                "url": course.url,
+                "instructor": course.instructor,
+                "duration_hours": course.duration_hours,
+                "rating": course.rating,
+                "num_students": course.num_students,
+                "price": course.price if not course.is_free else 0,
+                "is_free": course.is_free,
+                "level": course.level,
+                "thumbnail_url": course.thumbnail_url,
+                "skills_taught": course.skills_taught,
+            }
+        )
+        self.gm.add_node(course_node)
+
+        for skill_id in course.skills_taught or []:
+            if not self.gm.get_node(skill_id):
+                skill_node = Node(
+                    id=skill_id,
+                    type=NodeType.SKILL,
+                    title=skill_id.replace("_", " ").title(),
+                )
+                self.gm.add_node(skill_node)
+            if not self.gm.graph.has_edge(course_id, skill_id):
+                self.gm.add_edge(course_id, skill_id, LinkType.TEACHES)
+
+        provider_id = f"provider_{course.provider}"
+        if not self.gm.get_node(provider_id):
+            try:
                 provider_node = Node(
                     id=provider_id,
                     type=NodeType.PROVIDER if hasattr(NodeType, 'PROVIDER') else NodeType.COURSE,
                     title=course.provider.title(),
                 )
-                try:
-                    self.gm.add_node(provider_node)
-                except:
-                    pass
-            
-            if not self.gm.graph.has_edge(provider_id, course_id):
-                try:
-                    self.gm.add_edge(provider_id, course_id, LinkType.TEACHES)
-                except:
-                    pass
-            
+                self.gm.add_node(provider_node)
+            except:
+                pass
+        if not self.gm.graph.has_edge(provider_id, course_id):
+            try:
+                self.gm.add_edge(provider_id, course_id, LinkType.TEACHES)
+            except:
+                pass
+        return course_id
+
+    def _add_course_to_graph(self, course: Course) -> str:
+        course_id = course.id
+        
+        if not self.gm.get_node(course_id):
+            self._add_course_to_graph_nosave(course)
             self.gm.save_graph()
         
         return course_id

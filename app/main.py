@@ -65,6 +65,8 @@ async def health_check():
 @app.on_event("startup")
 async def on_startup():
     logger.info("SkillBridge API starting | version=%s", settings.VERSION)
+    from app.services.similarity.semantic_matcher import get_semantic_matcher
+    get_semantic_matcher().warmup()
 
 
 if __name__ == "__main__":

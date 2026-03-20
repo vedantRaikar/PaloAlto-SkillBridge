@@ -25,6 +25,7 @@ class GapAnalyzer:
         self._skill_mapper = None
         self._skill_alias_map: Dict[str, Set[str]] = {}
         self._semantic_matcher = None
+        self._match_cache: Dict[tuple, bool] = {}
         self._initialized = True
         self._build_alias_map()
     
@@ -57,22 +58,32 @@ class GapAnalyzer:
         2. Alias match
         3. Substring match
         4. Semantic similarity (most accurate)
+        Results are memoized to avoid repeated expensive comparisons.
         """
         s1 = self._normalize_skill(skill1)
         s2 = self._normalize_skill(skill2)
         
         if s1 == s2:
             return True
+
+        cache_key = (s1, s2) if s1 < s2 else (s2, s1)
+        if cache_key in self._match_cache:
+            return self._match_cache[cache_key]
         
         if s1 in self._skill_alias_map.get(s2, set()):
+            self._match_cache[cache_key] = True
             return True
         if s2 in self._skill_alias_map.get(s1, set()):
+            self._match_cache[cache_key] = True
             return True
         
         try:
-            return self.semantic_matcher.skills_match(skill1, skill2)
+            result = self.semantic_matcher.skills_match(skill1, skill2)
         except Exception:
-            return False
+            result = False
+
+        self._match_cache[cache_key] = result
+        return result
     
     @property
     def skill_mapper(self):
@@ -99,15 +110,20 @@ class GapAnalyzer:
         user_skills = self.graph_manager.get_user_skills(user_id)
         
         if not user_skills:
-            from app.services.knowledge_sources.onet_integration import get_onet_knowledge
-            onet = get_onet_knowledge()
-            all_known_skills = []
-            for occ in onet.get_all_occupations():
-                all_known_skills.extend(occ.get('skills', []))
-            user_skills = [s for s in all_known_skills if any(self._skills_match(s, us) for us in user_skills)]
-        
-        gaps = [s for s in required_skills if not any(self._skills_match(s, us) for us in user_skills)]
-        matched = [s for s in required_skills if any(self._skills_match(s, us) for us in user_skills)]
+            user_skills = []
+
+        # Pre-compute normalized user skills for fast lookup
+        user_norm = {self._normalize_skill(s) for s in user_skills}
+
+        gaps = []
+        matched = []
+        for s in required_skills:
+            s_norm = self._normalize_skill(s)
+            # Fast exact check first, then fall back to semantic matching
+            if s_norm in user_norm or any(self._skills_match(s, us) for us in user_skills):
+                matched.append(s)
+            else:
+                gaps.append(s)
         
         gap_courses = {}
         gap_certifications = {}
@@ -147,8 +163,13 @@ class GapAnalyzer:
         """
         user_skills = self.graph_manager.get_user_skills(user_id)
         required_skills = self._get_role_skills(target_role)
-        
-        gaps = [s for s in required_skills if not any(self._skills_match(s, us) for us in user_skills)]
+
+        user_norm = {self._normalize_skill(s) for s in (user_skills or [])}
+        gaps = []
+        for s in required_skills:
+            s_norm = self._normalize_skill(s)
+            if s_norm not in user_norm and not any(self._skills_match(s, us) for us in (user_skills or [])):
+                gaps.append(s)
         
         path_generator = get_learning_path_generator()
         learning_path = path_generator.generate_learning_path(gaps, user_skills)
@@ -326,6 +347,7 @@ class GapAnalyzer:
         try:
             from app.models.graph import Node, NodeType, LinkType
             
+            added = False
             for c in courses:
                 course_id = f"{c.get('provider', 'course')}_{c.get('title', skill_id)[:30].replace(' ', '_').lower()}"
                 
@@ -346,8 +368,10 @@ class GapAnalyzer:
                     )
                     self.graph_manager.add_node(course_node)
                     self.graph_manager.add_edge(skill_id, course_id, LinkType.TEACHES)
+                    added = True
             
-            self.graph_manager.save_graph()
+            if added:
+                self.graph_manager.save_graph()
         except Exception:
             pass
 
@@ -355,6 +379,7 @@ class GapAnalyzer:
         try:
             from app.models.graph import Node, NodeType, LinkType
             
+            added = False
             for c in certs:
                 cert_id = f"cert_{c.get('id', c.get('name', skill_id)[:30].replace(' ', '_').lower())}"
                 
@@ -373,8 +398,10 @@ class GapAnalyzer:
                     )
                     self.graph_manager.add_node(cert_node)
                     self.graph_manager.add_edge(skill_id, cert_id, LinkType.TEACHES)
+                    added = True
             
-            self.graph_manager.save_graph()
+            if added:
+                self.graph_manager.save_graph()
         except Exception:
             pass
 

@@ -22,10 +22,14 @@ from pathlib import Path
 from functools import lru_cache
 from urllib.parse import quote_plus, urlparse
 
+from app.core.logger import get_logger
+
 
 ONET_API_BASE = "https://api.mynextmove.org"
 ONET_TAXONOMY_CACHE = "data/knowledge_base/onet_taxonomy.json"
 ONET_SKILL_COURSES_CACHE = "data/knowledge_base/skill_course_mapping.json"
+
+logger = get_logger(__name__)
 
 ONET_SKILL_CATEGORIES = {
     "programming": ["programming", "software", "coding", "development", "scripting"],
@@ -617,147 +621,25 @@ class ONetKnowledgeBase:
         
         return related
     
-    def query_wikidata_for_courses(self, skill: str, max_results: int = 5) -> List[Dict]:
-        """
-        Query Wikidata using SPARQL for courses related to a skill.
-        Returns structured course data from Wikidata community.
-        
-        Coverage: 1000+ courses, 500+ skills available
-        """
-        import time
-        
-        skill_normalized = self._normalize_skill(skill)
-        
-        # Skip live queries during tests
-        if "PYTEST_CURRENT_TEST" in os.environ:
-            return []
-        
-        # Check cache first (24-hour TTL)
-        cache_key = f"wikidata_{skill_normalized}"
-        cache_entry = self._live_course_cache.get(cache_key, {})
-        if isinstance(cache_entry, dict):
-            cached_courses = cache_entry.get("courses", [])
-            cached_timestamp = cache_entry.get("timestamp", 0)
-            
-            # Cache valid for 24 hours (86400 seconds)
-            if cached_courses and (time.time() - cached_timestamp) < 86400:
-                return cached_courses[:max_results]
-        
-        wikidata_endpoint = "https://query.wikidata.org/sparql"
-        
-        # SPARQL query to find courses/learning resources for a skill
-        sparql_query = f"""
-        SELECT ?course ?courseLabel ?url ?instanceLabel ?durationYears
-        WHERE {{
-          # Find online courses about the skill
-          ?course wdt:P31 ?instance .
-          ?instance wdt:P279* wd:Q11707 .  # online course or subclass
-          
-          ?course rdfs:label ?courseLabel .
-          FILTER(LANG(?courseLabel) = "en")
-          FILTER(REGEX(?courseLabel, "{skill}", "i"))
-          
-          OPTIONAL {{ ?course wdt:P973 ?url . }}
-          OPTIONAL {{ ?course wdt:P2094 ?durationYears . }}
-          OPTIONAL {{ ?instance rdfs:label ?instanceLabel . FILTER(LANG(?instanceLabel) = "en") }}
-          
-          LIMIT {max_results}
-        }}
-        """
-        
-        try:
-            with httpx.Client(timeout=8.0) as client:
-                response = client.get(
-                    wikidata_endpoint,
-                    params={
-                        "query": sparql_query,
-                        "format": "json"
-                    },
-                    headers={"User-Agent": "Mozilla/5.0 (SkillBridge/1.0)"}
-                )
-                response.raise_for_status()
-                data = response.json()
-                
-                courses = self._parse_wikidata_results(data.get("results", {}).get("bindings", []), skill)
-                
-                # Cache the results
-                if courses:
-                    self._live_course_cache[cache_key] = {
-                        "courses": courses,
-                        "timestamp": time.time(),
-                        "source": "wikidata"
-                    }
-                    self._save_live_course_cache()
-                    return courses[:max_results]
-                    
-        except Exception as e:
-            # Silently fail and return empty list, will fallback to static mapping
-            pass
-        
-        return []
-    
-    def _parse_wikidata_results(self, bindings: List[Dict], skill: str) -> List[Dict]:
-        """Parse Wikidata SPARQL results into course objects"""
-        courses = []
-        
-        for binding in bindings:
-            try:
-                course_label = binding.get("courseLabel", {}).get("value", "")
-                url = binding.get("url", {}).get("value", "")
-                instance_label = binding.get("instanceLabel", {}).get("value", "")
-                duration = binding.get("durationYears", {}).get("value", "")
-                
-                if not course_label:
-                    continue
-                
-                # Convert duration from years to hours (estimate: 1 year ≈ 200 hours)
-                duration_hours = 20
-                try:
-                    if duration:
-                        duration_years = float(duration)
-                        duration_hours = int(duration_years * 200)
-                except (ValueError, TypeError):
-                    pass
-                
-                course = {
-                    "title": course_label,
-                    "provider": "wikidata",
-                    "url": url if url else f"https://www.wikidata.org/wiki/Special:Search?search={course_label}",
-                    "instructor": "Wikidata Community",
-                    "duration_hours": duration_hours,
-                    "level": "beginner",
-                    "is_free": True,
-                    "rating": 4.5,
-                    "num_students": 0,
-                    "description": f"Community-verified {instance_label or 'course'} for {skill}",
-                    "source": "wikidata",
-                }
-                courses.append(course)
-            except Exception:
-                continue
-        
-        return courses
-    
     def get_courses_for_skill(self, skill: str) -> List[Dict]:
-        """Get courses for a skill, prioritizing Wikidata SPARQL > Live discovery > Static mapping"""
+        """Get courses for a skill with resilient fallback ordering."""
         import time
         
         skill_normalized = self._normalize_skill(skill)
 
-        # Priority 1: Try Wikidata SPARQL (best coverage, community-verified)
-        wikidata_courses = self.query_wikidata_for_courses(skill)
-        if wikidata_courses:
-            return wikidata_courses[:5]
-
-        # Priority 2: Check live course cache (runtime web scraping)
+        # Priority 1: Check cached live discovery results.
         cache_entry = self._live_course_cache.get(skill_normalized, {})
         if isinstance(cache_entry, dict):
             cached_courses = cache_entry.get("courses", [])
             cached_timestamp = cache_entry.get("timestamp", 0)
             
-            # Cache valid for 24 hours
             if cached_courses and (time.time() - cached_timestamp) < 86400:
                 return cached_courses
+
+        # Priority 2: Try live discovery before static fallback.
+        live_courses = self.discover_courses_live(skill, max_results=5)
+        if live_courses:
+            return live_courses
         
         # Priority 3: Static SKILL_TO_COURSES (fallback)
         if skill_normalized in SKILL_TO_COURSES:

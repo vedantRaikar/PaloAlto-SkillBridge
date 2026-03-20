@@ -1,5 +1,76 @@
 [
   {
+    "job_id": "job_69bc01d1fff0",
+    "input_type": "role_batch",
+    "source": "manual",
+    "data": {
+      "title": "Backend Engineer",
+      "description": "Role built from 3 job descriptions",
+      "skills": [
+        "api",
+        "docker",
+        "gin",
+        "postgres",
+        "postgresql",
+        "python",
+        "r",
+        "ci/cd",
+        "fastapi",
+        "git",
+        "redis",
+        "ai",
+        "aws",
+        "azure",
+        "data_pipeline",
+        "devops",
+        "django",
+        "etl",
+        "flask",
+        "gcp",
+        "go",
+        "grafana",
+        "integration_test",
+        "kafka",
+        "kubernetes",
+        "linux",
+        "message_queue",
+        "microservice",
+        "microservices",
+        "opentelemetry",
+        "pandas",
+        "prometheus",
+        "rabbitmq",
+        "rest",
+        "scala",
+        "security",
+        "sre",
+        "terraform",
+        "testing"
+      ]
+    },
+    "normalized": {
+      "title": "Backend Engineer",
+      "description": ""
+    },
+    "extraction_result": {
+      "success": true,
+      "graph_updated": true,
+      "role_id": "backend_engineer",
+      "skills_extracted": 39,
+      "method_used": "batch_aggregate",
+      "tiers_attempted": [
+        "llm",
+        "dynamic_fallback",
+        "human_loop"
+      ],
+      "fallback_triggered": false
+    },
+    "graph_updated": true,
+    "role_id": "backend_engineer",
+    "skills_extracted": 39,
+    "timestamp": "2026-03-20T06:57:55.802337"
+  },
+  {
     "job_id": "job_10ed1a7354c1",
     "input_type": "role_batch",
     "source": "manual",

@@ -44,7 +44,7 @@ Layer 3: Data and Knowledge Layer (Graph and Resource Backbone)
 - What it contains:
    - Knowledge graph managed through NetworkX
    - JSON-backed stores (knowledge graph, skills library, courses, certifications, pending review)
-   - External knowledge sources (O*NET, Wikidata SPARQL, provider resources)
+   - External knowledge sources (O*NET, DuckDuckGo live discovery, provider resources)
 - What it does:
    - Stores relationships among users, roles, skills, courses, and certifications
    - Serves graph queries used by the gap and roadmap engines
@@ -165,7 +165,7 @@ Responsibility:
 
 Recent design improvement:
 - Dynamic recommendation path introduced with external knowledge discovery.
-- Wikidata SPARQL integration is used to supplement static mappings.
+- DuckDuckGo-based live course discovery is used to supplement static mappings.
 - TTL-based caching ensures recommendations refresh periodically while preserving performance.
 
 Benefits:
@@ -318,7 +318,98 @@ Why chosen:
 - Improves reliability and user experience.
 - Prevents hard failures due to partial upstream outages.
 
-## 6. API Design Principles
+## 6. AI Failure and Fallback Architecture
+
+One of the core reliability concerns in SkillBridge is that several key workflows depend on services that can fail — the Groq LLM, spaCy NLP models, and external data sources like O\*NET. Rather than letting a single failure cascade into a broken user experience, the system is designed to degrade gracefully at every layer. If the smartest strategy does not work, something simpler takes over, and the user still gets a useful result.
+
+This section walks through how each component handles that reality.
+
+### 6.1 The Core Principle
+
+The guiding idea is simple: always try the best approach, but never depend on it exclusively. Throughout the codebase, this looks like:
+
+- Missing API keys are detected at startup so LLM paths silently disable themselves before any request is made — no runtime surprises.
+- LLM exceptions are caught per-call, so a single bad response does not abort a larger workflow.
+- Every AI-dependent method returns a well-typed empty result rather than `None` or an exception, so downstream code does not need special error-handling logic.
+- Fallback events are logged, so failures are observable without disrupting the user-facing response.
+
+### 6.2 Extraction Pipeline — The Clearest Example
+
+The `ExtractionPipeline` is where the fallback architecture is most explicit. When a job description or resume comes in, the system runs three tiers in sequence and stops as soon as one of them produces usable output.
+
+**Tier 1 — LLM extraction with NLP reinforcement**
+
+This is the preferred path. `EntityExtractor` sends the text to the Groq LLM to extract skill entities with semantic understanding. `TopicExtractor`, also LLM-powered, identifies broader topics, implied skills, domains, and certifications. Alongside both of these, the `NLPExtractor` runs spaCy's named-entity recognition to independently identify entities from the text using trained linguistic models.
+
+If the Groq API key is not configured, the two LLM extractors return empty results immediately, but the `NLPExtractor` continues on its own. Any exception thrown by any individual extractor is caught in isolation — the others are not affected. Tier 1 is considered successful if at least one skill node is extracted from any of these sources combined.
+
+**Tier 2 — NLP-based fallback**
+
+If Tier 1 produces nothing, the system falls back to `NLPExtractor` running independently, combined with `DynamicSkillExtractor` — a pure regex and keyword matcher running against a hardcoded list of over 150 common technology terms. There is no LLM call at this stage. The NLP model handles natural language structure, while the keyword matcher covers common technology names that appear verbatim. This tier handles the majority of cases where LLM output is unavailable or empty.
+
+**Tier 3 — Human review queue**
+
+If both Tier 1 and Tier 2 come back empty, the system does not return an error. Instead, it quietly adds the job to the pending review queue via `PendingQueue.add()`, returns a `pending_item_id` to the caller so the item can be tracked, and marks the response with `fallback_triggered=True`. A human reviewer can then handle the case manually.
+
+### 6.3 Skill Resolver
+
+`SkillResolver` uses the LLM to canonicalize skill name variants — mapping something like "pg" to "postgresql" or "k8s" to "kubernetes". If the Groq API key is missing, the LLM client is set to `None` at initialization and all resolver methods skip the LLM call entirely from that point forward.
+
+When the LLM is unavailable or throws an exception, the resolver falls back to simple string normalization: lowercasing the skill name and replacing spaces with underscores. This keeps downstream matching functional — exact string comparisons still work — but the system loses its ability to recognize semantic equivalences between different names for the same technology.
+
+### 6.4 Entity Linker
+
+`EntityLinker` uses the LLM to figure out what category a skill belongs to and what its relationships are to other skills. To avoid unnecessary LLM calls, it checks an in-memory cache first — if the skill was seen before, the cached result is returned immediately.
+
+If the cache misses, it checks the pre-loaded `skills_map` from the skills library JSON, which often already contains category information. Only if that also comes up empty does it call the LLM. If the LLM fails for any reason, it falls back to returning `"unknown"` for categories and empty lists for relationships, both of which are cached so the LLM is not retried for the same skill again in the same session. There is also a synchronous variant, `infer_skill_category_sync`, that never calls the LLM at all — it only checks the cache and the skills map, making it safe to call in tight loops.
+
+### 6.5 Topic Extractor
+
+`TopicExtractor` is responsible for pulling structured information out of job descriptions — things like technology categories, implied skills, soft skills, and certification mentions. It wraps four separate LLM calls, each following the same pattern.
+
+First, it checks an in-memory cache. If the same text was processed recently, the cached structured result is returned without touching the LLM. If the API key is not set, it returns a typed empty object straight away. If the LLM call fails, it again returns a structured empty default — not `None`, but a properly typed object like `{tech_categories: [], implied_skills: [], domain: "none", experience_level: "unknown"}`. This means downstream code never has to check for null; it just gets an empty but valid result.
+
+### 6.6 Chatbot
+
+The chatbot is built in a way that intentionally limits how much of it depends on the LLM. Context assembly — querying the knowledge graph, looking up O\*NET data, finding relevant skills and certifications — is entirely deterministic and does not touch the LLM at all. No AI outage can disrupt this phase.
+
+The LLM is only involved in the final step: synthesizing the assembled context into a natural language answer. If that call fails, the chatbot responds with a readable apology message that includes a truncated version of the error. If the input question is empty, the LLM call is skipped outright and the user gets a helpful prompt suggesting what to ask. Errors in individual context lookups, such as the certification lookup, cause that piece of context to simply be omitted rather than aborting the whole response.
+
+### 6.7 Gap Analyzer
+
+The gap analyzer has independent fallback chains for several of its responsibilities.
+
+When looking up the skills required for a target role, it first checks the knowledge graph. If the graph has no data for that role, it falls back to querying the O\*NET API. If that also returns nothing, it defaults to an empty skill list.
+
+For skill matching, it tries an exact normalized string comparison first, then checks bidirectional alias maps, and finally uses the semantic similarity matcher as a last resort. The semantic matcher is wrapped in a try/except, so if the embedding model is unavailable, matching simply returns `False` for that pair rather than crashing.
+
+For course and certification lookups, results for each skill are individually cached in memory. On a cache miss, the knowledge graph is queried, then external discovery services. Crucially, any exception for one skill is contained to that skill — the loop continues for all remaining skills rather than aborting early.
+
+### 6.8 Course Discovery
+
+`CourseAggregator` uses three tiers for course recommendations. It checks its in-memory cache first, which has a 24-hour TTL — if fresh results exist, they are returned immediately without any external call. On a cache miss, it runs a live DuckDuckGo-based discovery to find relevant learning resources. If live discovery returns nothing, it falls back to three hardcoded generic courses from freeCodeCamp and Coursera. This static result is also cached so repeated requests for the same skill do not keep hitting external sources unnecessarily.
+
+`LearningResourceManager` takes a similar containment approach — any exception discovering resources for one skill results in an empty list for that skill, and the batch continues normally for the rest. Errors writing the results back to the graph are also silently swallowed, because a persistence failure should not surface as an API error.
+
+### 6.9 Roadmap Generator
+
+`RoadmapGenerator` uses the LLM to produce personalized learning milestones for each skill. If the LLM is unavailable or raises an exception, it returns a simple static set of three steps per skill — "Learn fundamentals", "Build projects", "Practice". Like the other components, milestone results are cached in memory, so repeated roadmap requests for the same skill set avoid redundant LLM calls entirely.
+
+### 6.10 Summary
+
+| Component | First Choice | If That Fails | Last Resort |
+|---|---|---|---|
+| Extraction Pipeline | Groq LLM + spaCy NER | spaCy NER + regex keyword matching | Human review queue |
+| Skill Resolver | LLM canonicalization | Lowercase + underscore normalization | Identity mapping |
+| Topic Extractor | LLM structured extraction | In-memory cache hit | Empty typed defaults |
+| Entity Linker | LLM inference | `skills_map` lookup | `"unknown"` / empty relations |
+| Chatbot | LLM answer synthesis | — | User-readable error message |
+| Gap Analyzer (role skills) | Knowledge graph | O\*NET API | Empty skill list |
+| Gap Analyzer (matching) | Exact string match | Alias map | Semantic similarity (skipped on error) |
+| Course Discovery | In-memory TTL cache | DuckDuckGo live discovery | Static hardcoded courses |
+| Roadmap Generator | LLM milestone generation | In-memory cache hit | Static 3-step milestones per skill |
+
+## 7. API Design Principles
 The backend follows these API principles:
 - Route grouping by domain (profile, extraction, courses, roadmap, jobs).
 - Clear request/response schemas with validation.
@@ -327,23 +418,23 @@ The backend follows these API principles:
 
 This keeps the API easy to evolve and straightforward for frontend integration.
 
-## 7. Non-Functional Considerations
+## 8. Non-Functional Considerations
 
-### 6.1 Performance
+### 8.1 Performance
 - In-memory and file-based cache layers reduce repeated discovery calls.
 - Structured fallback chain avoids hard failures under partial dependency outages.
 - JSON graph structure keeps local development fast and debuggable.
 
-### 6.2 Reliability
+### 8.2 Reliability
 - Multiple extraction paths improve resilience to model/service failures.
 - Fallback recommendations available when dynamic sources are not reachable.
 
-### 6.3 Maintainability
+### 8.3 Maintainability
 - Service-oriented backend modules separate responsibilities.
 - Pydantic schemas keep contracts explicit.
 - Test suite validates key user flows and regression-prone routes.
 
-### 6.4 Security and Compliance (Current and Planned)
+### 8.4 Security and Compliance (Current and Planned)
 Current:
 - Input validation and structured parsing.
 - Environment-based secret handling.
@@ -353,7 +444,7 @@ Planned:
 - Audit logging for sensitive profile operations.
 - Data retention and deletion controls.
 
-## 8. Trade-Offs and Design Decisions
+## 9. Trade-Offs and Design Decisions
 
 ### Decision 1: JSON-based data store instead of relational database
 Pros:
@@ -373,11 +464,11 @@ Pros:
 Cons:
 - Requires cache policy tuning and source quality checks.
 
-## 9. Future Enhancements
+## 10. Future Enhancements
 
 ### 8.1 Data and Recommendation Quality
 - Multi-source recommendation fusion:
-  - Wikidata + curated catalogs + provider APIs.
+  - Curated catalogs + provider APIs.
 - Ranking model using:
   - Relevance, quality signals, learner outcomes, and user constraints.
 - Personalized recommendation scoring:
@@ -403,7 +494,7 @@ Cons:
 - Profile privacy controls and consent-aware data ingestion.
 - Enterprise-friendly audit and policy controls.
 
-## 10. Suggested Deployment Evolution
+## 11. Suggested Deployment Evolution
 
 Current state is suitable for local and small-team usage. For production hardening:
 1. Introduce managed database and object storage.
@@ -412,7 +503,7 @@ Current state is suitable for local and small-team usage. For production hardeni
 4. Deploy frontend and backend with CI/CD and environment promotion.
 5. Add end-to-end monitoring and incident response playbooks.
 
-## 11. Conclusion
+## 12. Conclusion
 SkillBridge has a strong foundation: modular service design, graph-aware reasoning, and a practical hybrid recommendation strategy.
 
 The immediate architecture is optimized for iteration speed and explainability, while the roadmap enables a clear path toward production-grade scalability, personalization, and reliability.

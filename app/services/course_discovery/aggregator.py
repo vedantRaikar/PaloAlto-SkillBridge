@@ -3,7 +3,7 @@ Course Discovery Aggregator
 ==========================
 Provides course recommendations based on O*NET knowledge base mappings.
 All course URLs are pre-verified and maintained in the knowledge source.
-Supports dynamic course discovery via Wikidata SPARQL with intelligent caching.
+Supports dynamic course discovery via DuckDuckGo with intelligent caching.
 """
 
 import time
@@ -56,9 +56,9 @@ class CourseAggregator:
     """
     Aggregates course recommendations using O*NET knowledge base.
     Features:
-    - Wikidata SPARQL integration for dynamic course discovery (1000+ courses)
+    - DuckDuckGo integration for dynamic course discovery
     - 24-hour intelligent caching (TTL-based, not persistent)
-    - Automatic fallback to static mappings if Wikidata unavailable
+    - Automatic fallback to static mappings if live discovery unavailable
     """
     
     def __init__(self):
@@ -77,8 +77,8 @@ class CourseAggregator:
         Get courses for a skill with intelligent TTL-based caching.
         
         Priority chain:
-        1. Wikidata SPARQL (1000+ courses, community-verified)
-        2. Live course cache (runtime discovery)
+        1. In-memory cache (24-hour TTL)
+        2. Live course discovery (DuckDuckGo)
         3. Static SKILL_TO_COURSES mappings
         """
         skill_lower = skill.lower().replace("_", " ")
@@ -104,7 +104,7 @@ class CourseAggregator:
                     # Expired entry, remove it
                     del self._cache[skill_lower]
         
-        # Not in cache or expired - query skill mapper (uses Wikidata as priority)
+        # Not in cache or expired - query skill mapper
         courses = self.skill_mapper.get_learning_path(skill)
         
         if not courses:
@@ -114,7 +114,7 @@ class CourseAggregator:
         self._cache[skill_lower] = {
             "courses": courses,
             "timestamp": time.time(),
-            "source": "wikidata" if "wikidata" in str(courses).lower() else "fallback"
+            "source": "live_discovery" if courses != FALLBACK_COURSES else "fallback"
         }
         
         return courses
