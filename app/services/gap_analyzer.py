@@ -61,12 +61,11 @@ class GapAnalyzer:
     
     def _skills_match(self, skill1: str, skill2: str) -> bool:
         """
-        Check if two skills match using semantic similarity.
-        Uses multiple strategies for best accuracy:
-        1. Exact match (fastest)
-        2. Alias match
-        3. Substring match
-        4. Semantic similarity (most accurate)
+        Check if two skills match using a four-tier cascade.
+        1. Exact normalized match (fastest)
+        2. Alias map lookup
+        3. Graph-based SimRank similarity
+        4. Semantic embedding similarity (most accurate)
         Results are memoized to avoid repeated expensive comparisons.
         """
         s1 = self._normalize_skill(skill1)

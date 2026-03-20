@@ -432,7 +432,7 @@ The gap analyzer has independent fallback chains for several of its responsibili
 
 When looking up the skills required for a target role, it first checks the knowledge graph. If the graph has no data for that role, it falls back to querying the O\*NET API. If that also returns nothing, it defaults to an empty skill list.
 
-For skill matching, it tries an exact normalized string comparison first, then checks bidirectional alias maps, and finally uses the semantic similarity matcher as a last resort. The semantic matcher is wrapped in a try/except, so if the embedding model is unavailable, matching simply returns `False` for that pair rather than crashing.
+For skill matching, it uses a four-tier cascade: exact normalized string comparison first, then bidirectional alias maps, then graph-based SimRank similarity (precomputed at startup), and finally the semantic embedding matcher as a last resort. Both SimRank and the semantic matcher are wrapped in try/except blocks, so if either is unavailable, matching falls through to the next tier or returns `False` rather than crashing.
 
 For course and certification lookups, results for each skill are individually cached in memory. On a cache miss, the knowledge graph is queried, then external discovery services. Crucially, any exception for one skill is contained to that skill — the loop continues for all remaining skills rather than aborting early.
 
@@ -456,7 +456,7 @@ For course and certification lookups, results for each skill are individually ca
 | Entity Linker | LLM inference | `skills_map` lookup | `"unknown"` / empty relations |
 | Chatbot | LLM answer synthesis | — | User-readable error message |
 | Gap Analyzer (role skills) | Knowledge graph | O\*NET API | Empty skill list |
-| Gap Analyzer (matching) | Exact string match | Alias map | Semantic similarity (skipped on error) |
+| Gap Analyzer (matching) | Exact string match | Alias map → SimRank | Semantic similarity (skipped on error) |
 | Course Discovery | In-memory TTL cache | DuckDuckGo live discovery | Static hardcoded courses |
 | Roadmap Generator | LLM milestone generation | In-memory cache hit | Static 3-step milestones per skill |
 
