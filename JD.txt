@@ -24,5 +24,3 @@ We are seeking a product-minded Backend Python Engineer to build features that d
 You should be strong in API architecture, schema design, and performance optimization, with a focus on maintainability and developer experience.  
 Required skills: Python, REST API development, PostgreSQL/MySQL, Redis, testing frameworks, Git workflows.  
 Preferred: Experience with OAuth2/JWT, third-party API integrations, and secure coding standards.
-
-If you want, I can next generate 4 more for the same role but with different seniority levels (Junior, Mid, Senior, Lead) so your extraction pipeline sees wider variation.

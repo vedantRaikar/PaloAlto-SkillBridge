@@ -6,6 +6,94 @@ Scenario Chosen: SkillBridge - AI-powered skill gap analysis and dynamic learnin
 YouTube Link - https://youtu.be/7OE8iLnh-jE?si=h1OolOSPhZyn23tG
 Estimated Time Spent: ~8 hours
 
+---
+
+## High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (Next.js)"]
+        UI[React UI]
+    end
+
+    subgraph API["FastAPI Backend"]
+        GW[API Gateway /api/v1]
+        GW --> ProfileR[Profile Routes]
+        GW --> RoadmapR[Roadmap Routes]
+        GW --> ExtractionR[Extraction Routes]
+        GW --> LearningR[Learning Routes]
+        GW --> ChatbotR[Chatbot Routes]
+        GW --> JobsR[Jobs Routes]
+        GW --> UserR[User Routes]
+        GW --> IngestR[Ingestion Routes]
+    end
+
+    subgraph Services["Core Services"]
+        RP[Resume Parser]
+        GA[GitHub Analyzer]
+        PB[Profile Builder]
+        EP[Extraction Pipeline]
+        GAP[Gap Analyzer]
+        LPG[Learning Path Generator]
+        RMG[Roadmap Generator]
+        LRM[Learning Resource Manager]
+        CB[Graph RAG Chatbot]
+    end
+
+    subgraph Intelligence["AI & Matching"]
+        SEM["Semantic Matcher\n(all-MiniLM-L6-v2)"]
+        SIM["SimRank Engine\n(Graph Similarity)"]
+        LLM["LLM (Groq)\nLangChain"]
+        NLP["spaCy NLP\nExtractor"]
+    end
+
+    subgraph Data["Data & Knowledge Graph"]
+        KG[(Knowledge Graph\nNetworkX DiGraph)]
+        ONET[O*NET Integration]
+        DDG[DuckDuckGo\nCourse Discovery]
+        JSON[JSON Storage]
+    end
+
+    UI <-->|HTTP| GW
+    ProfileR --> RP & GA & PB
+    RoadmapR --> GAP & LPG & RMG
+    ExtractionR --> EP
+    LearningR --> LRM
+    ChatbotR --> CB
+    JobsR --> EP
+    IngestR --> KG
+
+    EP --> LLM & NLP
+    GAP --> SEM & SIM
+    CB --> LLM
+    LRM --> DDG & ONET
+    PB --> KG
+    GAP --> KG
+    LPG --> KG
+    RMG --> KG
+    KG --> JSON
+```
+
+### Data Flow
+
+```mermaid
+graph LR
+    A[Resume / GitHub / JD] --> B[Extraction Pipeline]
+    B --> C[Knowledge Graph]
+    C --> D[Gap Analyzer]
+    D --> E[Learning Path Generator]
+    E --> F[Personalized Roadmap]
+    F --> G[Course & Cert Recommendations]
+```
+
+---
+
+## API Endpoints
+
+Base URL: `http://localhost:8000/api/v1`
+
+Interactive docs available at `http://localhost:8000/docs` (Swagger UI).
+
 Quick Start:
 - Prerequisites:
 	- Python 3.10+

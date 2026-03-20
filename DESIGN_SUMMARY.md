@@ -286,7 +286,7 @@ flowchart TD
 
 ## 8. Quality & Testing
 
-- **TDD workflow:** Scope identification → module-level tests → full regression suite → integration path checks → manual review → runtime verification → gate
+- **TDD (test driven architecture) workflow:** Scope identification → module-level tests → full regression suite → integration path checks → manual review → runtime verification → gate
 - **Test suite:** 486 tests covering all services, routes, and models
 - Input validation via Pydantic; environment-based secret management
 
