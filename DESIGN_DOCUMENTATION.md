@@ -550,7 +550,7 @@ Cons:
   - Time budget, preferred providers, current level, and goals.
 
 ### 10.3 Platform and Scalability
-- Move from JSON persistence to PostgreSQL and/or graph database.
+- Move from JSON persistence to PostgreSQL + Neo4j graph DB and/or graph database.
 - Add background workers for extraction and recommendation refresh jobs.
 - Add distributed caching for production deployments.
 

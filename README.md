@@ -154,7 +154,7 @@ Tradeoffs & Prioritization:
 		- Improve the skill-to-course mapping in the knowledge graph with richer, curated relationships (weighted edges, prerequisite depth, provider quality scores).
 		- Introduce a structured schema for skill, course, and certification nodes to enforce consistency across ingestion sources.
 		- Add versioning and migration support for graph data so schema evolution does not break existing profiles.
-	- Introduce PostgreSQL + graph persistence strategy for better scale.
+	- Introduce PostgreSQL+ Neo4j graph DB + graph persistence strategy for better scale.
 	- Add recommendation ranking signals (freshness, user preference, quality metrics).
 	- Add frontend integration tests and end-to-end observability dashboards.
 	- Dockerize the application and create a docker-compose file for orchestration

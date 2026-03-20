@@ -295,7 +295,7 @@ flowchart TD
 ## 9. Future Roadmap
 
 1. **Data layer:** Structured schema for skill/course/certification nodes; weighted graph edges; data quality tooling
-2. **Infrastructure:** PostgreSQL / graph DB; background workers; distributed caching
+2. **Infrastructure:** PostgreSQL + Neo4j graph DB; background workers; distributed caching
 3. **Product:** Explainable recommendations; skill progression simulation; role comparison
 4. **Operations:** Telemetry dashboards; latency monitoring; alerting
 5. **Security:** OAuth login; profile privacy controls; audit logging
