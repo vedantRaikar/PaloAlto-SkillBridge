@@ -156,8 +156,31 @@ Responsibility:
 - Calculate readiness and confidence indicators.
 
 Design notes:
-- Uses taxonomy mappings and semantic matching for tolerant comparison.
+- Uses a multi-tier matching cascade for tolerant skill comparison.
 - Designed to support both direct and inferred skill alignments.
+
+How the matching cascade works:
+
+The gap analyzer compares each required role skill against every user skill using a four-tier strategy. It stops at the first tier that produces a match:
+
+| Tier | Strategy | Description | Cost |
+|------|----------|-------------|------|
+| 1 | Exact normalized match | Lowercase, underscore-normalize, then string equality check | O(1) set lookup |
+| 2 | Alias map lookup | Bidirectional dictionary check against curated SKILL_ALIASES | O(1) |
+| 3 | Graph-based SimRank | Structural similarity from shared roles, courses, and domains in the knowledge graph | O(1) cache lookup |
+| 4 | Semantic embedding similarity | Sentence-transformer cosine similarity with threshold >= 0.75 | O(d) where d = 384 |
+
+Performance optimizations:
+- A pre-built normalized skill set enables O(1) exact lookups before the cascade runs.
+- All match results are memoized in a bidirectional cache so each unique pair is computed at most once.
+- SimRank scores are precomputed at startup over the full knowledge graph.
+- Sentence-transformer canonical embeddings are precomputed at startup; only new user-skill embeddings are computed at request time.
+
+Readiness calculation:
+- Readiness = |matched_skills| / |required_skills|, representing a 0–1 ratio of how many target-role skills the user already possesses.
+
+Resource mapping for gaps:
+- Each missing skill is mapped to courses and certifications through a cached lookup chain: in-memory cache → knowledge graph query → web discovery fallback → graph persistence for future reuse.
 
 ### 4.4 Learning and Certification Recommendation Layer
 Responsibility:
@@ -230,7 +253,7 @@ Purpose:
 - Match skills with different wording but similar meaning (for example, "k8s" and "kubernetes").
 
 Where it is used:
-- Gap analysis, skill linking, and fallback skill mapping.
+- Gap analysis (Tier 4 fallback), skill linking, and fallback skill mapping.
 
 How it works in SkillBridge:
 - Skills are embedded into vector space using sentence-transformer embeddings.
@@ -317,6 +340,34 @@ How it works in SkillBridge:
 Why chosen:
 - Improves reliability and user experience.
 - Prevents hard failures due to partial upstream outages.
+
+### 5.10 SimRank — Graph-Based Skill Similarity
+Purpose:
+- Compute structural similarity between skills based on their shared relationships in the knowledge graph, not their textual names.
+- Catch domain relationships that text embeddings miss — for example, "Docker" and "Kubernetes" are similar because DevOps roles require both and the same courses teach them.
+
+Where it is used:
+- Gap analysis engine (Tier 3, between alias lookup and semantic embeddings).
+
+How it works in SkillBridge:
+1. A skill-only projection graph is built from the full knowledge graph. Two skills are connected if they share a common non-skill neighbor (a role that requires both, a course that teaches both, or a domain they both belong to). The edge weight equals the number of shared neighbors.
+2. Iterative SimRank runs over this projected graph:
+   - sim(a, a) = 1
+   - sim(a, b) = (C / (|N(a)| × |N(b)|)) × Σ sim(N_i(a), N_j(b))
+   - Where C is the decay factor (default 0.8) and N(x) are the neighbors of x.
+3. The algorithm iterates a fixed number of rounds (default 5). Convergence is fast because the projected graph is typically sparse.
+4. Only pairs with similarity above the threshold (default 0.3) are stored.
+5. All scores are precomputed at startup and cached; runtime lookups are O(1).
+
+Why chosen:
+- Captures co-occurrence patterns that are invisible to text-based methods.
+- Leverages the existing knowledge graph — no additional data sources needed.
+- Complements semantic embedding similarity: embeddings handle name-level synonyms ("ML" ↔ "Machine Learning"), SimRank handles structural synonyms ("React" ↔ "Angular" via shared front-end courses/roles).
+- Precomputed at startup so it adds zero latency to request-time matching.
+
+Trade-off acknowledged:
+- SimRank quality depends on graph density. A sparse graph with few courses and roles produces fewer useful similarity pairs.
+- As the graph grows, computation cost increases quadratically with the number of skill nodes. For very large graphs (10K+ skills), approximate SimRank or random-walk methods would be needed.
 
 ## 6. AI Failure and Fallback Architecture
 
@@ -434,7 +485,19 @@ This keeps the API easy to evolve and straightforward for frontend integration.
 - Pydantic schemas keep contracts explicit.
 - Test suite validates key user flows and regression-prone routes.
 
-### 8.4 Security and Compliance (Current and Planned)
+### 8.4 Test-Driven Development for AI-Assisted Changes
+All AI-assisted code changes in SkillBridge are validated using a test-driven development (TDD) strategy:
+1. **Identify scope:** Before accepting any AI suggestion, the affected modules and their existing test coverage are identified.
+2. **Module-level validation:** Focused, module-level tests are run after each change to verify the modified behavior in isolation.
+3. **Full regression suite:** The complete backend test suite (`pytest app/tests/`) is run to catch regressions across all services.
+4. **Integration path checks:** Key integration paths (course discovery, learning resources, API startup, gap analysis) are validated through targeted test execution.
+5. **Manual review:** Changed files are manually reviewed to confirm fallback behavior, caching correctness, and error handling logic.
+6. **Runtime verification:** Runtime behavior is validated against demo scenarios and fallback-triggered paths.
+7. **Gate:** Only changes that pass all tests and produce expected output in the application flow are committed.
+
+This workflow ensures that AI-generated code is held to the same quality bar as manually written code, preventing regressions and maintaining system reliability.
+
+### 8.5 Security and Compliance (Current and Planned)
 Current:
 - Input validation and structured parsing.
 - Environment-based secret handling.
@@ -466,7 +529,19 @@ Cons:
 
 ## 10. Future Enhancements
 
-### 8.1 Data and Recommendation Quality
+### 10.1 Data Layer and Skill-to-Course Mapping
+- Build a dedicated base data layer:
+  - Introduce a structured schema for skill, course, and certification nodes to enforce consistency across all ingestion sources.
+  - Replace raw JSON-backed graph storage with a well-defined persistence model that supports versioning and schema migration.
+- Improve skill-to-course mapping in the knowledge graph:
+  - Enrich graph edges with weights representing relevance, prerequisite depth, and provider quality scores.
+  - Curate and validate course-to-skill relationships to reduce false positives from dynamic discovery.
+  - Support many-to-many mappings where a single course covers multiple skills and a single skill is taught by multiple courses.
+- Add data quality tooling:
+  - Automated consistency checks for orphan nodes, duplicate edges, and missing relationships.
+  - Periodic reconciliation jobs to align cached discovery results with the canonical graph.
+
+### 10.2 Data and Recommendation Quality
 - Multi-source recommendation fusion:
   - Curated catalogs + provider APIs.
 - Ranking model using:
@@ -474,22 +549,22 @@ Cons:
 - Personalized recommendation scoring:
   - Time budget, preferred providers, current level, and goals.
 
-### 8.2 Platform and Scalability
+### 10.3 Platform and Scalability
 - Move from JSON persistence to PostgreSQL and/or graph database.
 - Add background workers for extraction and recommendation refresh jobs.
 - Add distributed caching for production deployments.
 
-### 8.3 Product Experience
+### 10.4 Product Experience
 - More explainable recommendations (why each course is suggested).
 - Skill progression simulation and milestone planning.
 - Side-by-side role comparison and what-if analysis.
 
-### 8.4 Observability and Operations
+### 10.5 Observability and Operations
 - Structured telemetry for extraction success/failure rates.
 - Latency dashboards for critical API paths.
 - Alerting for integration failures and cache miss spikes.
 
-### 8.5 Security and Governance
+### 10.6 Security and Governance
 - OAuth-based login and scoped user sessions.
 - Profile privacy controls and consent-aware data ingestion.
 - Enterprise-friendly audit and policy controls.

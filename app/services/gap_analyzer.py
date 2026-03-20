@@ -3,6 +3,7 @@ from app.services.graph_manager import GraphManager
 from app.models.user import SkillGap
 from app.services.knowledge_sources.onet_integration import get_skill_mapper, SKILL_ALIASES
 from app.services.similarity.semantic_matcher import get_semantic_matcher
+from app.services.similarity.graph_similarity import get_graph_similarity
 from app.services.learning_path_generator import get_learning_path_generator
 from app.services.fast_track_generator import get_fast_track_generator
 from app.services.optimized_path_generator import get_optimized_path_generator
@@ -25,6 +26,7 @@ class GapAnalyzer:
         self._skill_mapper = None
         self._skill_alias_map: Dict[str, Set[str]] = {}
         self._semantic_matcher = None
+        self._graph_similarity = None
         self._match_cache: Dict[tuple, bool] = {}
         self._initialized = True
         self._build_alias_map()
@@ -44,6 +46,13 @@ class GapAnalyzer:
         if self._semantic_matcher is None:
             self._semantic_matcher = get_semantic_matcher()
         return self._semantic_matcher
+
+    @property
+    def graph_sim(self):
+        """Lazy load graph-based SimRank similarity engine"""
+        if self._graph_similarity is None:
+            self._graph_similarity = get_graph_similarity()
+        return self._graph_similarity
     
     def _normalize_skill(self, skill: str) -> str:
         """Normalize skill name to canonical form"""
@@ -77,6 +86,15 @@ class GapAnalyzer:
             self._match_cache[cache_key] = True
             return True
         
+        # Tier 3: Graph-based SimRank similarity
+        try:
+            if self.graph_sim.is_computed and self.graph_sim.skills_match(s1, s2):
+                self._match_cache[cache_key] = True
+                return True
+        except Exception:
+            pass
+
+        # Tier 4: Semantic embedding similarity (heaviest)
         try:
             result = self.semantic_matcher.skills_match(skill1, skill2)
         except Exception:

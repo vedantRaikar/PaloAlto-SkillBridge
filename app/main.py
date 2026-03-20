@@ -67,6 +67,10 @@ async def on_startup():
     logger.info("SkillBridge API starting | version=%s", settings.VERSION)
     from app.services.similarity.semantic_matcher import get_semantic_matcher
     get_semantic_matcher().warmup()
+    from app.services.similarity.graph_similarity import get_graph_similarity
+    from app.services.graph_manager import GraphManager
+    sim = get_graph_similarity()
+    sim.compute(GraphManager().graph)
 
 
 if __name__ == "__main__":

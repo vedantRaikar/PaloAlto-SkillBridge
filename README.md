@@ -3,7 +3,8 @@ Candidate Name: Gokuldas Vedant Raikar
 
 Scenario Chosen: SkillBridge - AI-powered skill gap analysis and dynamic learning resource recommendation using a knowledge graph.
 
-Estimated Time Spent: ~5 hours
+YouTube Link - https://youtu.be/7OE8iLnh-jE?si=h1OolOSPhZyn23tG
+Estimated Time Spent: ~8 hours
 
 Quick Start:
 - Prerequisites:
@@ -40,13 +41,16 @@ AI Disclosure:
 	- Yes (OpenCode / Github Copilot)
 
 - How did you verify the suggestions?
-	- I ran focused tests after each change to validate the modified module behavior.
-  - I ran the full backend suite to ensure there were no regressions:
-    uv run pytest app/tests -q --tb=short --cov=app
-  - I confirmed key integration paths (course discovery, learning resources, and API startup) by running targeted   tests and checking pass/fail results.
-  - I manually reviewed changed files to ensure fallbacks, caching behavior, and error handling matched intended logic.
-  - I validated runtime behavior with a demo script for dynamic recommendations and checked that fallback logic worked when external sources were unavailable.
-  - I only kept changes that passed tests and produced expected output in the app flow.
+	- I followed a **test-driven development (TDD) strategy** to validate all AI-assisted changes:
+		1. Before accepting any AI suggestion, I identified the affected modules and their existing test coverage.
+		2. I ran focused, module-level tests after each change to validate the modified behavior.
+		3. I ran the full backend suite to ensure there were no regressions:
+		   `uv run pytest app/tests -q --tb=short --cov=app`
+		4. I confirmed key integration paths (course discovery, learning resources, and API startup) by running targeted tests and checking pass/fail results.
+		5. I manually reviewed changed files to ensure fallbacks, caching behavior, and error handling matched intended logic.
+		6. I validated runtime behavior with a demo script for dynamic recommendations and checked that fallback logic worked when external sources were unavailable.
+		7. I only kept changes that passed tests and produced expected output in the app flow.
+	- This TDD (Test Driven Developement) workflow ensures AI-generated code is validated against real test expectations before being committed.
 
 
 - Give one example of a suggestion you rejected or changed:
@@ -62,6 +66,11 @@ Tradeoffs & Prioritization:
 	- Advanced frontend E2E test coverage.
 	- Production-grade auth/RBAC and deployment hardening.
 - What would you build next if you had more time?
+	- **Data Layer & Skill-to-Course Mapping Improvements:**
+		- Build a dedicated base data layer to replace raw JSON-backed graph storage.
+		- Improve the skill-to-course mapping in the knowledge graph with richer, curated relationships (weighted edges, prerequisite depth, provider quality scores).
+		- Introduce a structured schema for skill, course, and certification nodes to enforce consistency across ingestion sources.
+		- Add versioning and migration support for graph data so schema evolution does not break existing profiles.
 	- Introduce PostgreSQL + graph persistence strategy for better scale.
 	- Add recommendation ranking signals (freshness, user preference, quality metrics).
 	- Add frontend integration tests and end-to-end observability dashboards.
@@ -76,3 +85,10 @@ Tradeoffs & Prioritization:
 	- Dynamic external sources can vary in quality and response time.
 	- JSON-backed graph is not ideal for concurrent high-write workloads.
 	- Frontend currently lacks a dedicated automated test command/script.
+
+
+
+Documentation:- 
+
+1) DESIGN_SUMMARY.md - short summary of the design Document
+1) DESIGN_DOCUMENTATION.md - detailed design and developement pattern followed
