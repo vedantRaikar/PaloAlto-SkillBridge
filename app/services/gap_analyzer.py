@@ -190,6 +190,16 @@ class GapAnalyzer:
         
         path_generator = get_learning_path_generator()
         learning_path = path_generator.generate_learning_path(gaps, user_skills)
+        fast_track_gen = get_fast_track_generator()
+
+        estimated_total_hours = fast_track_gen.estimate_total_hours_for_skills(
+            learning_path["ordered_skills"],
+            target_role=target_role,
+        )
+        estimated_total_weeks = fast_track_gen.estimate_total_weeks_for_skills(
+            learning_path["ordered_skills"],
+            target_role=target_role,
+        )
         
         skills_with_resources = {}
         for skill in learning_path["ordered_skills"]:
@@ -211,8 +221,9 @@ class GapAnalyzer:
             "phases": learning_path["phases"],
             "milestones": skills_with_resources,
             "total_skills_to_learn": learning_path["total_skills_to_learn"],
-            "estimated_days": learning_path["estimated_days"],
-            "estimated_weeks": learning_path["estimated_weeks"],
+            "estimated_days": int(round(estimated_total_weeks * 7)),
+            "estimated_weeks": estimated_total_weeks,
+            "estimated_hours": estimated_total_hours,
             "category_breakdown": learning_path["category_breakdown"],
         }
 
@@ -304,14 +315,9 @@ class GapAnalyzer:
         if graph_courses:
             self._course_cache[skill_id] = graph_courses
             return graph_courses
-        
-        courses = self._fetch_courses_web(skill_id)
-        self._course_cache[skill_id] = courses
-        
-        if courses:
-            self._store_courses_in_graph(skill_id, courses)
-        
-        return courses
+
+        self._course_cache[skill_id] = []
+        return []
 
     def _get_cached_certs(self, skill_id: str) -> List[Dict]:
         if skill_id in self._cert_cache:
@@ -362,31 +368,7 @@ class GapAnalyzer:
 
     def _store_courses_in_graph(self, skill_id: str, courses: List[Dict]):
         try:
-            from app.models.graph import Node, NodeType, LinkType
-            
-            added = False
-            for c in courses:
-                course_id = f"{c.get('provider', 'course')}_{c.get('title', skill_id)[:30].replace(' ', '_').lower()}"
-                
-                if not self.graph_manager.get_node(course_id):
-                    course_node = Node(
-                        id=course_id,
-                        type=NodeType.COURSE,
-                        title=c.get("title", skill_id),
-                        category=c.get("provider", "unknown"),
-                        metadata={
-                            "provider": c.get("provider", ""),
-                            "url": c.get("url", ""),
-                            "instructor": c.get("instructor", ""),
-                            "duration_hours": c.get("duration_hours"),
-                            "rating": c.get("rating"),
-                            "level": c.get("level", "all"),
-                        }
-                    )
-                    self.graph_manager.add_node(course_node)
-                    self.graph_manager.add_edge(skill_id, course_id, LinkType.TEACHES)
-                    added = True
-            
+            added = self.graph_manager.store_courses_for_skill(skill_id, courses)
             if added:
                 self.graph_manager.save_graph()
         except Exception:
@@ -394,29 +376,7 @@ class GapAnalyzer:
 
     def _store_certs_in_graph(self, skill_id: str, certs: List[Dict]):
         try:
-            from app.models.graph import Node, NodeType, LinkType
-            
-            added = False
-            for c in certs:
-                cert_id = f"cert_{c.get('id', c.get('name', skill_id)[:30].replace(' ', '_').lower())}"
-                
-                if not self.graph_manager.get_node(cert_id):
-                    cert_node = Node(
-                        id=cert_id,
-                        type=NodeType.CERTIFICATION,
-                        title=c.get("name", skill_id),
-                        category=c.get("provider", "unknown"),
-                        metadata={
-                            "provider": c.get("provider", ""),
-                            "level": c.get("level", "associate"),
-                            "cost_usd": c.get("cost_usd"),
-                            "certification_url": c.get("certification_url", ""),
-                        }
-                    )
-                    self.graph_manager.add_node(cert_node)
-                    self.graph_manager.add_edge(skill_id, cert_id, LinkType.TEACHES)
-                    added = True
-            
+            added = self.graph_manager.store_certifications_for_skill(skill_id, certs)
             if added:
                 self.graph_manager.save_graph()
         except Exception:
@@ -455,10 +415,9 @@ class GapAnalyzer:
         if courses:
             self._course_cache[skill_id] = courses
             return courses[:max_results]
-        
-        courses = self._fetch_courses_web(skill_id)
-        self._course_cache[skill_id] = courses
-        return courses[:max_results]
+
+        self._course_cache[skill_id] = []
+        return []
     
     def get_certifications_for_skill(self, skill_id: str) -> List[Dict]:
         if skill_id in self._cert_cache:

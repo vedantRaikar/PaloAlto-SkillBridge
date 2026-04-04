@@ -65,6 +65,7 @@ class CourseAggregator:
         self._cache: Dict[str, Dict] = {}  # Now stores {skill: {timestamp, courses}}
         self._skill_mapper: Optional[SkillCourseMapper] = None
         self.cache_ttl_seconds = 86400  # 24 hours
+        self.cache_version = 2
     
     @property
     def skill_mapper(self) -> SkillCourseMapper:
@@ -94,18 +95,21 @@ class CourseAggregator:
             
             if isinstance(cache_entry, dict):
                 timestamp = cache_entry.get("timestamp", 0)
-                
-                # Cache valid if not expired (24 hours)
-                if time.time() - timestamp < self.cache_ttl_seconds:
-                    courses = cache_entry.get("courses", [])
-                    if courses:
-                        return courses
-                else:
-                    # Expired entry, remove it
+                cache_version = cache_entry.get("version", 0)
+                if cache_version != self.cache_version:
                     del self._cache[skill_lower]
+                else:
+                    # Cache valid if not expired (24 hours)
+                    if time.time() - timestamp < self.cache_ttl_seconds:
+                        courses = cache_entry.get("courses", [])
+                        if courses:
+                            return courses
+                    else:
+                        # Expired entry, remove it
+                        del self._cache[skill_lower]
         
         # Not in cache or expired - query skill mapper
-        courses = self.skill_mapper.get_learning_path(skill)
+        courses = self.skill_mapper.get_learning_path(skill, prefer_live=True)
         
         if not courses:
             courses = FALLBACK_COURSES.copy()
@@ -114,7 +118,8 @@ class CourseAggregator:
         self._cache[skill_lower] = {
             "courses": courses,
             "timestamp": time.time(),
-            "source": "live_discovery" if courses != FALLBACK_COURSES else "fallback"
+            "source": "live_discovery" if courses != FALLBACK_COURSES else "fallback",
+            "version": self.cache_version,
         }
         
         return courses

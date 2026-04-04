@@ -1,4 +1,5 @@
 import os
+from math import ceil
 from typing import List, Optional
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
@@ -8,6 +9,7 @@ from app.services.gap_analyzer import GapAnalyzer
 from app.services.graph_manager import GraphManager
 from app.models.user import Roadmap, WeekPlan
 from app.core.config import settings
+from app.services.fast_track_generator import get_fast_track_generator
 
 MILESTONES_PROMPT = PromptTemplate.from_template('''
 For each skill listed, suggest appropriate learning milestones/progression steps.
@@ -114,25 +116,31 @@ class RoadmapGenerator:
 
     def generate_structured_roadmap(self, user_id: str, target_role: str) -> Roadmap:
         gap = self.gap_analyzer.analyze_gaps(user_id, target_role)
+        fast_track = get_fast_track_generator()
         
         weeks = []
-        for i, skill in enumerate(gap.missing_skills, 1):
+        current_week = 1
+        for skill in gap.missing_skills:
             skill_node = self.graph_manager.get_node(skill)
             courses = gap.courses_for_gaps.get(skill, [])
+            skill_weeks = max(1, ceil(fast_track.estimate_total_weeks_for_skills([skill], target_role)))
             
             week = WeekPlan(
-                week=i,
+                week=current_week,
                 skill=skill,
                 skill_category=skill_node.get('category') if skill_node else None,
                 resources=courses[:3],
                 milestones=["Learn fundamentals", "Build projects", "Practice"]
             )
             weeks.append(week)
+            current_week += skill_weeks
+        
+        total_weeks = int(max(0, current_week - 1))
         
         return Roadmap(
             user_id=user_id,
             target_role=target_role,
-            total_weeks=len(weeks),
+            total_weeks=total_weeks,
             weeks=weeks,
             ai_generated=False,
             fallback_used=True
@@ -145,6 +153,7 @@ class RoadmapGenerator:
 
     async def generate_ai_roadmap(self, user_id: str, target_role: str) -> Roadmap:
         gap = self.gap_analyzer.analyze_gaps(user_id, target_role)
+        fast_track = get_fast_track_generator()
         
         llm_roadmap = await self._generate_roadmap_llm(
             gap.user_skills,
@@ -156,24 +165,29 @@ class RoadmapGenerator:
             milestones_map = await self._generate_milestones_llm(gap.missing_skills)
             
             weeks = []
-            for i, week_data in enumerate(llm_roadmap.get("weeks", []), 1):
+            current_week = 1
+            for week_data in llm_roadmap.get("weeks", []):
                 skill = week_data.get("skill", "")
                 skill_node = self.graph_manager.get_node(skill)
                 courses = gap.courses_for_gaps.get(skill, [])
+                skill_weeks = max(1, ceil(fast_track.estimate_total_weeks_for_skills([skill], target_role)))
                 
                 week = WeekPlan(
-                    week=i,
+                    week=current_week,
                     skill=skill,
                     skill_category=week_data.get("skill_category") or skill_node.get('category') if skill_node else None,
                     resources=courses[:3],
                     milestones=week_data.get("milestones", milestones_map.get(skill, ["Learn fundamentals", "Build projects", "Practice"]))
                 )
                 weeks.append(week)
+                current_week += skill_weeks
+            
+            total_weeks = int(max(0, current_week - 1))
             
             return Roadmap(
                 user_id=user_id,
                 target_role=target_role,
-                total_weeks=llm_roadmap.get("total_weeks", len(weeks)),
+                total_weeks=total_weeks,
                 weeks=weeks,
                 ai_generated=True,
                 fallback_used=False

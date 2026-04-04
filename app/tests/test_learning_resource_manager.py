@@ -142,7 +142,17 @@ def test_recommend_certifications_for_skills_returns_enriched_payload(manager):
 
 
 def test_get_learning_resources_for_skill_combines_courses_and_certs(manager):
-    manager._search_courses_for_skill = lambda skill_id: [_sample_course()]
+    manager.gm.graph.add_node(
+        "course_demo",
+        type="course",
+        title="Demo Course",
+        provider="demo",
+        url="https://example.com/demo",
+        is_free=True,
+        level="beginner",
+    )
+    manager.gm.graph.add_node("python", type="skill", title="Python")
+    manager.gm.graph.add_edge("python", "course_demo", type="teaches")
 
     resources = manager.get_learning_resources_for_skill("python")
 
@@ -160,7 +170,7 @@ def test_generate_learning_paths_includes_cert_and_multi_skill_paths(manager):
     assert any(p["name"] == "Multi-Skill Learning Path" for p in paths)
 
 
-def test_get_courses_for_skill_reads_graph_predecessors(manager):
+def test_get_courses_for_skill_reads_graph_successors(manager):
     manager.gm.graph.add_node(
         "course_demo",
         type="course",
@@ -171,12 +181,43 @@ def test_get_courses_for_skill_reads_graph_predecessors(manager):
         level="beginner",
     )
     manager.gm.graph.add_node("python", type="skill", title="Python")
-    manager.gm.graph.add_edge("course_demo", "python", type="teaches")
+    manager.gm.graph.add_edge("python", "course_demo", type="teaches")
 
     courses = manager._get_courses_for_skill("python")
 
     assert len(courses) == 1
     assert courses[0].id == "course_demo"
+
+
+def test_get_courses_for_skill_reads_metadata_backed_nodes(manager):
+    manager.gm.graph.add_node(
+        "python",
+        type="skill",
+        title="Python",
+    )
+    manager.gm.graph.add_node(
+        "coursera_python_specialization",
+        type="course",
+        title="Python for Everybody Specialization",
+        category="coursera",
+        metadata={
+            "provider": "coursera",
+            "url": "https://www.coursera.org/specializations/python",
+            "instructor": "Dr. Charles Severance",
+            "is_free": False,
+            "level": "beginner",
+            "rating": 4.8,
+            "source": "coursera_catalog",
+        },
+    )
+    manager.gm.graph.add_edge("python", "coursera_python_specialization", type="teaches")
+
+    resources = manager.get_learning_resources_for_skill("Python")
+
+    assert resources["skill_id"] == "python"
+    assert len(resources["courses"]) == 1
+    assert resources["courses"][0]["provider"] == "coursera"
+    assert resources["courses"][0]["url"] == "https://www.coursera.org/specializations/python"
 
 
 def test_get_graph_stats_reports_course_and_cert_counts(manager):

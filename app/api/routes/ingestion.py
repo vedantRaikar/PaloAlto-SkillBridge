@@ -43,9 +43,13 @@ async def ingest_job(job: JobIngest):
     
     for skill in job.skills:
         skill_id = normalize_id(skill)
-        if not graph_manager.get_node(skill_id):
-            skill_node = Node(id=skill_id, type=NodeType.SKILL, category="ingested")
-            graph_manager.add_node(skill_node)
+        graph_manager.ensure_skill_node(
+            skill_id,
+            category="ingested",
+            title=skill.replace("_", " ").title(),
+            metadata={"source": "job_ingestion"},
+            enrich_resources=True,
+        )
         graph_manager.add_edge(role_id, skill_id, LinkType.REQUIRES)
     
     graph_manager.save_graph()
@@ -69,9 +73,13 @@ async def ingest_course(course: CourseIngest):
     
     for skill in course.skills_taught:
         skill_id = normalize_id(skill)
-        if not graph_manager.get_node(skill_id):
-            skill_node = Node(id=skill_id, type=NodeType.SKILL, category="ingested")
-            graph_manager.add_node(skill_node)
+        graph_manager.ensure_skill_node(
+            skill_id,
+            category="ingested",
+            title=skill.replace("_", " ").title(),
+            metadata={"source": "course_ingestion"},
+            enrich_resources=True,
+        )
         graph_manager.add_edge(course_id, skill_id, LinkType.TEACHES)
     
     graph_manager.save_graph()
@@ -80,14 +88,14 @@ async def ingest_course(course: CourseIngest):
 @router.post("/skill")
 async def add_skill(skill: SkillAdd):
     skill_id = normalize_id(skill.id)
-    
-    skill_node = Node(
-        id=skill_id,
-        type=NodeType.SKILL,
-        category=skill.category,
-        aliases=skill.aliases
+
+    graph_manager.ensure_skill_node(
+        skill_id,
+        category=skill.category or "programming",
+        title=skill.id.replace("_", " ").title(),
+        metadata={"source": "manual_skill_add", "aliases": skill.aliases},
+        enrich_resources=True,
     )
-    graph_manager.add_node(skill_node)
     graph_manager.save_graph()
     
     return {"message": "Skill added", "skill_id": skill_id}

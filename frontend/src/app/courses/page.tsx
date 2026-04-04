@@ -219,10 +219,12 @@ export default function CoursesPage() {
                     ))}
                   </div>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {courses.map((course) => (
-                    <CourseCard key={course.id} course={course} />
-                  ))}
+                <div className="max-h-[72vh] overflow-y-auto pr-2">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {courses.map((course) => (
+                      <CourseCard key={course.id} course={course} />
+                    ))}
+                  </div>
                 </div>
               </>
             ) : (

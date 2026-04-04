@@ -25,22 +25,65 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { setUser, setSkills, setGithubUsername, name, skills } = useUserStore()
-  const [githubUsername, setGithubUsernameInput] = useState('')
+  const { userId, setUser, setSkills, setGithubUsername, name, skills, githubUsername } = useUserStore()
+  const [githubUsernameInput, setGithubUsernameInput] = useState('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isSavingProfile, setIsSavingProfile] = useState(false)
   const [manualSkill, setManualSkill] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const normalizeSkills = (items: string[]) => {
+    const seen = new Set<string>()
+    const normalized: string[] = []
+
+    for (const item of items) {
+      const skill = item.toLowerCase().trim().replace(/\s+/g, '_')
+      if (!skill || seen.has(skill)) continue
+      seen.add(skill)
+      normalized.push(skill)
+    }
+
+    return normalized
+  }
+
+  const persistProfileSkills = async () => {
+    const normalizedSkills = normalizeSkills(skills)
+
+    if (!normalizedSkills.length) {
+      throw new Error('Please add at least one skill before analyzing')
+    }
+
+    if (userId) {
+      const updatedProfile = await profileApi.update(userId, {
+        skills: normalizedSkills,
+        github_username: githubUsername || undefined,
+      })
+      setUser(updatedProfile)
+      setSkills(updatedProfile.skills)
+      return updatedProfile
+    }
+
+    const createdProfile = await profileApi.manual({
+      user_id: `manual_${Date.now()}`,
+      name: name?.trim() && name !== 'Guest User' ? name.trim() : 'Manual User',
+      skills: normalizedSkills,
+      github_username: githubUsername || undefined,
+    })
+    setUser(createdProfile)
+    setSkills(createdProfile.skills)
+    return createdProfile
+  }
+
   const handleGitHubAnalyze = async () => {
-    if (!githubUsername.trim()) return
+    if (!githubUsernameInput.trim()) return
     setIsAnalyzing(true)
     setError('')
     setSuccess('')
     try {
-      const profile = await profileApi.github(githubUsername)
+      const profile = await profileApi.github(githubUsernameInput)
       setUser(profile)
       setSkills(profile.skills)
       setGithubUsername(profile.github?.username || null)
@@ -143,11 +186,11 @@ export default function ProfilePage() {
                 <div className="flex gap-2">
                   <Input
                     placeholder="Enter GitHub username"
-                    value={githubUsername}
+                    value={githubUsernameInput}
                     onChange={(e) => setGithubUsernameInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleGitHubAnalyze()}
                   />
-                  <Button onClick={handleGitHubAnalyze} disabled={isAnalyzing || !githubUsername.trim()}>
+                  <Button onClick={handleGitHubAnalyze} disabled={isAnalyzing || !githubUsernameInput.trim()}>
                     {isAnalyzing ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -265,8 +308,30 @@ export default function ProfilePage() {
                 ))}
               </div>
               <div className="mt-6 flex gap-4">
-                <Button onClick={() => router.push('/analyze')}>
-                  Analyze Skills
+                <Button
+                  onClick={async () => {
+                    setError('')
+                    setSuccess('')
+                    setIsSavingProfile(true)
+                    try {
+                      await persistProfileSkills()
+                      router.push('/analyze')
+                    } catch (err: any) {
+                      setError(err?.response?.data?.detail || err?.message || 'Failed to save profile skills')
+                    } finally {
+                      setIsSavingProfile(false)
+                    }
+                  }}
+                  disabled={isSavingProfile}
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Analyze Skills'
+                  )}
                 </Button>
                 <Button variant="outline" onClick={() => router.push('/')}>
                   Back to Dashboard

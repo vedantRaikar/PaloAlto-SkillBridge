@@ -37,6 +37,9 @@ class LearningResourceManager:
         p.parent.mkdir(parents=True, exist_ok=True)
         with open(p, 'w') as f:
             json.dump(data, f, indent=2)
+
+    def _normalize_skill_id(self, skill_id: str) -> str:
+        return (skill_id or "").strip().lower().replace(" ", "_").replace("-", "_")
     
     async def search_courses(self, request: CourseSearchRequest) -> CourseSearchResponse:
         response = await self.course_aggregator.search_all(
@@ -147,11 +150,12 @@ class LearningResourceManager:
         return recommendations
     
     def get_learning_resources_for_skill(self, skill_id: str) -> Dict[str, List]:
-        courses = self._search_courses_for_skill(skill_id)
+        normalized_skill_id = self._normalize_skill_id(skill_id)
+        courses = self._get_courses_for_skill(normalized_skill_id)
         certifications = []
         
         try:
-            certifications = self.cert_service.get_by_skill(skill_id)
+            certifications = self.cert_service.get_by_skill(normalized_skill_id)
         except Exception:
             pass
         
@@ -174,7 +178,7 @@ class LearningResourceManager:
                 certs_data.append({"name": str(c), "provider": "unknown"})
         
         return {
-            "skill_id": skill_id,
+            "skill_id": normalized_skill_id,
             "courses": courses_data,
             "certifications": certs_data,
             "total_resources": len(courses_data) + len(certs_data),
@@ -297,21 +301,41 @@ class LearningResourceManager:
         return cert_id
     
     def _get_courses_for_skill(self, skill_id: str) -> List[Course]:
-        if skill_id not in self.gm.graph.nodes:
+        normalized_skill_id = self._normalize_skill_id(skill_id)
+        if normalized_skill_id not in self.gm.graph.nodes:
             return []
         
         courses = []
-        predecessors = list(self.gm.graph.predecessors(skill_id))
+        successors = list(self.gm.graph.successors(normalized_skill_id))
         
-        for pred in predecessors:
-            node_data = self.gm.graph.nodes[pred]
+        for succ in successors:
+            node_data = self.gm.graph.nodes[succ]
             if node_data.get("type") == "course":
-                course_data = node_data.copy()
-                course_data["id"] = pred
+                metadata = node_data.get("metadata", {}) if isinstance(node_data.get("metadata", {}), dict) else {}
+                # Support both legacy flat course nodes and graph-manager metadata-backed nodes.
+                course_data = {
+                    "id": succ,
+                    "title": node_data.get("title") or metadata.get("title") or succ.replace("_", " ").title(),
+                    "provider": node_data.get("provider") or node_data.get("category") or metadata.get("provider", "unknown"),
+                    "url": node_data.get("url") or metadata.get("url", ""),
+                    "instructor": node_data.get("instructor") or metadata.get("instructor"),
+                    "duration_hours": node_data.get("duration_hours") if node_data.get("duration_hours") is not None else metadata.get("duration_hours"),
+                    "rating": node_data.get("rating") if node_data.get("rating") is not None else metadata.get("rating"),
+                    "num_students": node_data.get("num_students") if node_data.get("num_students") is not None else metadata.get("num_students"),
+                    "price": node_data.get("price") if node_data.get("price") is not None else metadata.get("price"),
+                    "is_free": node_data.get("is_free") if node_data.get("is_free") is not None else metadata.get("is_free", False),
+                    "level": node_data.get("level") or metadata.get("level", "beginner"),
+                    "thumbnail_url": node_data.get("thumbnail_url") or metadata.get("thumbnail_url"),
+                    "skills_taught": node_data.get("skills_taught") or metadata.get("skills_taught") or [normalized_skill_id],
+                    "description": node_data.get("description") or metadata.get("description") or f"Learn {normalized_skill_id.replace('_', ' ')}",
+                }
                 try:
                     courses.append(Course(**course_data))
-                except:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        "Skipping invalid course node during graph read",
+                        extra={"skill_id": normalized_skill_id, "course_node": succ, "error": str(exc)},
+                    )
         
         return courses
     

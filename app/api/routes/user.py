@@ -26,8 +26,13 @@ async def create_user(user: UserCreate):
     graph_manager.add_node(user_node)
     
     for skill in user.skills:
-        if graph_manager.get_node(skill):
-            graph_manager.add_edge(user.id, skill, LinkType.HAS_SKILL)
+        graph_manager.add_user_skill(
+            user.id,
+            skill,
+            category="programming",
+            metadata={"source": "user_create"},
+            enrich_resources=True,
+        )
     
     graph_manager.save_graph()
     return {"message": "User created", "user_id": user.id}
@@ -40,9 +45,13 @@ async def get_user_skills(user_id: str):
 @router.put("/{user_id}/skills")
 async def update_user_skills(user_id: str, update: UserSkillsUpdate):
     for skill in update.skills:
-        if graph_manager.get_node(skill):
-            if not graph_manager.graph.has_edge(user_id, skill):
-                graph_manager.add_edge(user_id, skill, LinkType.HAS_SKILL)
+        graph_manager.add_user_skill(
+            user_id,
+            skill,
+            category="programming",
+            metadata={"source": "user_skill_update"},
+            enrich_resources=True,
+        )
     
     graph_manager.save_graph()
     return {"message": "Skills updated", "user_id": user_id, "skills": update.skills}

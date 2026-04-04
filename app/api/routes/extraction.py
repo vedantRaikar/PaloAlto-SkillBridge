@@ -45,10 +45,19 @@ def _process_extraction(req: ExtractionRequest):
         role_nodes = [n for n in extraction.nodes if n.type == "role"]
         skill_nodes = [n for n in extraction.nodes if n.type == "skill"]
         
-        for node in role_nodes + skill_nodes:
+        for node in role_nodes:
             existing = gm.get_node(node.id)
             if not existing:
                 gm.add_node(node)
+
+        for skill_node in skill_nodes:
+            gm.ensure_skill_node(
+                skill_node.id,
+                category=skill_node.category or "programming",
+                title=skill_node.title,
+                metadata=skill_node.metadata or {"source": "extraction"},
+                enrich_resources=True,
+            )
         
         for link in extraction.links:
             if not gm.graph.has_edge(link.source, link.target):
@@ -109,8 +118,13 @@ async def extract_course(req: CourseExtractionRequest):
         
         for skill in extraction.nodes:
             if skill.type == "skill":
-                if not gm.get_node(skill.id):
-                    gm.add_node(skill)
+                gm.ensure_skill_node(
+                    skill.id,
+                    category=skill.category or "programming",
+                    title=skill.title,
+                    metadata=skill.metadata or {"source": "course_extraction"},
+                    enrich_resources=True,
+                )
                 if not gm.graph.has_edge(course_id, skill.id):
                     gm.add_edge(course_id, skill.id, LinkType.TEACHES)
         

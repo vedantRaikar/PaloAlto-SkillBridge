@@ -30,6 +30,7 @@ class ProfileUpdateRequest(BaseModel):
     skills: Optional[List[str]] = None
     github_username: Optional[str] = None
     email: Optional[str] = None
+    refresh_resources: bool = False
 
 
 CSV_HEADERS = [
@@ -248,16 +249,14 @@ async def update_profile(user_id: str, req: ProfileUpdateRequest):
             normalized_skills.append(skill_id)
 
         for skill_id in normalized_skills:
-            if not graph_manager.node_exists(skill_id):
-                graph_manager.add_node(Node(
-                    id=skill_id,
-                    type=NodeType.SKILL,
-                    title=skill_id.replace('_', ' ').title(),
-                    category='programming',
-                    metadata={'source': 'manual_profile_update'},
-                ))
-            if not graph_manager.graph.has_edge(user_id, skill_id):
-                graph_manager.add_edge(user_id, skill_id, LinkType.HAS_SKILL)
+            graph_manager.add_user_skill(
+                user_id,
+                skill_id,
+                category='programming',
+                metadata={'source': 'manual_profile_update'},
+                enrich_resources=True,
+                force_refresh=req.refresh_resources,
+            )
 
     graph_manager.save_graph()
     updated_profile = await get_profile(user_id)

@@ -3,11 +3,14 @@ import networkx as nx
 from pathlib import Path
 from typing import List, Dict, Optional, Set
 from app.core.config import settings
+from app.core.logger import get_logger
 from app.models.graph import Node, Link, NodeType, LinkType
 
 CATEGORIES = ['programming', 'frontend', 'backend', 'devops', 'cloud', 'database', 
               'ai', 'tools', 'security', 'mobile', 'api', 'architecture', 
               'data', 'infrastructure', 'quality', 'methodology']
+
+logger = get_logger(__name__)
 
 
 class GraphManager:
@@ -58,6 +61,181 @@ class GraphManager:
         link_type_str = link_type.value if hasattr(link_type, 'value') else link_type
         self.graph.add_edge(source, target, type=link_type_str, weight=weight)
 
+    def _normalize_skill_id(self, skill_id: str) -> str:
+        return (skill_id or "").strip().lower().replace(" ", "_").replace("-", "_")
+
+    def _has_outgoing_resource(self, skill_id: str, node_type: str) -> bool:
+        if skill_id not in self.graph.nodes:
+            return False
+        for _, target in self.graph.out_edges(skill_id):
+            if self.graph.nodes[target].get("type") == node_type:
+                return True
+        return False
+
+    def ensure_skill_node(
+        self,
+        skill_id: str,
+        category: str = "programming",
+        title: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+        enrich_resources: bool = False,
+        force_refresh: bool = False,
+    ) -> str:
+        normalized_skill_id = self._normalize_skill_id(skill_id)
+        if not normalized_skill_id:
+            return normalized_skill_id
+
+        if not self.node_exists(normalized_skill_id):
+            node = Node(
+                id=normalized_skill_id,
+                type=NodeType.SKILL,
+                category=category,
+                title=title or normalized_skill_id.replace('_', ' ').title(),
+                metadata=metadata or {},
+            )
+            self.add_node(node)
+
+        category_node = f"category_{category}"
+        if self.node_exists(category_node) and not self.graph.has_edge(category_node, normalized_skill_id):
+            self.add_edge(category_node, normalized_skill_id, LinkType.PART_OF)
+
+        if enrich_resources:
+            self.enrich_skill_resources(normalized_skill_id, force_refresh=force_refresh)
+
+        return normalized_skill_id
+
+    def add_user_skill(
+        self,
+        user_id: str,
+        skill_id: str,
+        category: str = "programming",
+        title: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+        enrich_resources: bool = True,
+        force_refresh: bool = False,
+    ) -> Optional[str]:
+        normalized_skill_id = self.ensure_skill_node(
+            skill_id,
+            category=category,
+            title=title,
+            metadata=metadata,
+            enrich_resources=enrich_resources,
+            force_refresh=force_refresh,
+        )
+        if not normalized_skill_id:
+            return None
+
+        if not self.graph.has_edge(user_id, normalized_skill_id):
+            self.add_edge(user_id, normalized_skill_id, LinkType.HAS_SKILL)
+
+        return normalized_skill_id
+
+    def store_courses_for_skill(self, skill_id: str, courses: List[Dict]) -> bool:
+        normalized_skill_id = self._normalize_skill_id(skill_id)
+        added = False
+
+        for course in courses:
+            course_id = f"{course.get('provider', 'course')}_{course.get('title', normalized_skill_id)[:30].replace(' ', '_').lower()}"
+            if not self.get_node(course_id):
+                course_node = Node(
+                    id=course_id,
+                    type=NodeType.COURSE,
+                    title=course.get("title", normalized_skill_id),
+                    category=course.get("provider", "unknown"),
+                    metadata={
+                        "provider": course.get("provider", ""),
+                        "url": course.get("url", ""),
+                        "instructor": course.get("instructor", ""),
+                        "duration_hours": course.get("duration_hours"),
+                        "rating": course.get("rating"),
+                        "level": course.get("level", "all"),
+                        "source": course.get("source", course.get("provider", "")),
+                    },
+                )
+                self.add_node(course_node)
+                added = True
+
+            if not self.graph.has_edge(normalized_skill_id, course_id):
+                self.add_edge(normalized_skill_id, course_id, LinkType.TEACHES)
+                added = True
+
+        return added
+
+    def store_certifications_for_skill(self, skill_id: str, certs: List[Dict]) -> bool:
+        normalized_skill_id = self._normalize_skill_id(skill_id)
+        added = False
+
+        for cert in certs:
+            cert_id = f"cert_{cert.get('id', cert.get('name', normalized_skill_id)[:30].replace(' ', '_').lower())}"
+            if not self.get_node(cert_id):
+                cert_node = Node(
+                    id=cert_id,
+                    type=NodeType.CERTIFICATION,
+                    title=cert.get("name", normalized_skill_id),
+                    category=cert.get("provider", "unknown"),
+                    metadata={
+                        "provider": cert.get("provider", ""),
+                        "level": cert.get("level", "associate"),
+                        "cost_usd": cert.get("cost_usd"),
+                        "certification_url": cert.get("certification_url", ""),
+                    },
+                )
+                self.add_node(cert_node)
+                added = True
+
+            if not self.graph.has_edge(normalized_skill_id, cert_id):
+                self.add_edge(normalized_skill_id, cert_id, LinkType.TEACHES)
+                added = True
+
+        return added
+
+    def enrich_skill_resources(self, skill_id: str, force_refresh: bool = False):
+        normalized_skill_id = self._normalize_skill_id(skill_id)
+        if not normalized_skill_id or not self.node_exists(normalized_skill_id):
+            return
+
+        try:
+            if force_refresh or not self._has_outgoing_resource(normalized_skill_id, NodeType.COURSE.value):
+                from app.services.knowledge_sources.onet_integration import get_skill_mapper
+
+                courses = get_skill_mapper().get_learning_path(normalized_skill_id, prefer_live=True)
+                if courses:
+                    self.store_courses_for_skill(normalized_skill_id, courses)
+        except Exception as exc:
+            logger.warning(
+                "Skill course enrichment failed",
+                extra={"skill_id": normalized_skill_id, "force_refresh": force_refresh, "error": str(exc)},
+            )
+
+        try:
+            if force_refresh or not self._has_outgoing_resource(normalized_skill_id, NodeType.CERTIFICATION.value):
+                from app.services.cert_discovery.service import get_certification_service
+
+                cert_service = get_certification_service()
+                certs = cert_service.get_by_skill(normalized_skill_id)
+                mapped_certs = [
+                    {
+                        "id": cert.id,
+                        "name": cert.name,
+                        "provider": cert.provider,
+                        "certification_url": cert.certification_url,
+                        "level": cert.level,
+                        "cost_usd": cert.cost_usd,
+                    }
+                    for cert in certs
+                ]
+                if mapped_certs:
+                    self.store_certifications_for_skill(normalized_skill_id, mapped_certs)
+        except Exception as exc:
+            logger.warning(
+                "Skill certification enrichment failed",
+                extra={"skill_id": normalized_skill_id, "force_refresh": force_refresh, "error": str(exc)},
+            )
+
+    def refresh_skill_resources(self, skill_id: str):
+        """Force-refresh skill resources even if course/cert edges already exist."""
+        self.enrich_skill_resources(skill_id, force_refresh=True)
+
     def get_role_skills(self, role_id: str) -> List[str]:
         return [t for _, t in self.graph.out_edges(role_id) 
                 if self.graph.nodes[t].get('type') == 'skill']
@@ -97,6 +275,52 @@ class GraphManager:
         except nx.NetworkXNoPath:
             return []
 
+    def populate_skill_prerequisites(
+        self,
+        skills: List[str],
+        prerequisites_map: Dict[str, List[str]],
+        duration_map: Dict[str, float],
+    ) -> None:
+        """Wire weighted PREREQUISITE_FOR edges between skill nodes.
+
+        Edge direction: prereq ──PREREQUISITE_FOR──▶ skill
+        Edge weight   : duration_hours of the *target* skill (learning cost to traverse)
+
+        This lets nx.multi_source_dijkstra find the minimum-time prerequisite chain
+        from any set of already-known skills to each missing skill.
+        """
+        for skill in skills:
+            skill_norm = self._normalize_skill_id(skill)
+            duration = duration_map.get(skill_norm, 20.0)
+
+            # Store duration as a node attribute so it survives graph serialisation.
+            if self.node_exists(skill_norm):
+                self.graph.nodes[skill_norm]["duration_hours"] = duration
+            else:
+                node = Node(
+                    id=skill_norm,
+                    type=NodeType.SKILL,
+                    title=skill_norm.replace("_", " ").title(),
+                )
+                self.add_node(node)
+                self.graph.nodes[skill_norm]["duration_hours"] = duration
+
+            prereqs = prerequisites_map.get(skill_norm, [])
+            for prereq in prereqs:
+                prereq_norm = self._normalize_skill_id(prereq)
+                if not self.node_exists(prereq_norm):
+                    prereq_duration = duration_map.get(prereq_norm, 20.0)
+                    prereq_node = Node(
+                        id=prereq_norm,
+                        type=NodeType.SKILL,
+                        title=prereq_norm.replace("_", " ").title(),
+                    )
+                    self.add_node(prereq_node)
+                    self.graph.nodes[prereq_norm]["duration_hours"] = prereq_duration
+                # Only add edge if not already present; preserve existing weight.
+                if not self.graph.has_edge(prereq_norm, skill_norm):
+                    self.add_edge(prereq_norm, skill_norm, LinkType.PREREQUISITE_FOR, weight=duration)
+
     def get_node(self, node_id: str) -> Optional[Dict]:
         if node_id in self.graph.nodes:
             return {'id': node_id, **self.graph.nodes[node_id]}
@@ -125,18 +349,7 @@ class GraphManager:
         return None
 
     def add_skill_with_category(self, skill_id: str, category: str, title: Optional[str] = None):
-        if not self.node_exists(skill_id):
-            node = Node(
-                id=skill_id,
-                type=NodeType.SKILL,
-                category=category,
-                title=title or skill_id.replace('_', ' ').title()
-            )
-            self.add_node(node)
-            
-            category_node = f"category_{category}"
-            if self.node_exists(category_node):
-                self.add_edge(category_node, skill_id, LinkType.PART_OF)
+        self.ensure_skill_node(skill_id, category=category, title=title)
 
     def add_role_with_skills(self, role_id: str, skill_ids: List[str], title: Optional[str] = None):
         if not self.node_exists(role_id):

@@ -28,6 +28,7 @@ def builder():
     pb.graph_manager.graph.has_edge.return_value = False
     pb.graph_manager.add_node = MagicMock()
     pb.graph_manager.add_edge = MagicMock()
+    pb.graph_manager.add_user_skill = MagicMock()
     pb.graph_manager.save_graph = MagicMock()
     return pb
 
@@ -174,6 +175,13 @@ def test_save_to_graph_new_user(builder):
     profile.experience_years = 2
     builder.save_to_graph(profile)
     builder.graph_manager.add_node.assert_called_once()
+    builder.graph_manager.add_user_skill.assert_called_once_with(
+        "user_new",
+        "python",
+        category="programming",
+        metadata={"source": "profile_ingestion"},
+        enrich_resources=True,
+    )
     builder.graph_manager.save_graph.assert_called_once()
 
 
@@ -183,16 +191,14 @@ def test_save_to_graph_existing_user(builder):
     builder.save_to_graph(profile)
     # Should not add node again
     builder.graph_manager.add_node.assert_not_called()
+    builder.graph_manager.add_user_skill.assert_called_once()
     builder.graph_manager.save_graph.assert_called_once()
 
 
 def test_save_to_graph_links_skills(builder):
-    builder.graph_manager.get_node.side_effect = lambda nid: (
-        None if nid == "user1" else {"type": "skill"}
-    )
     profile = _make_profile("user1", "Alice", ["python", "docker"])
     builder.save_to_graph(profile)
-    assert builder.graph_manager.add_edge.call_count == 2
+    assert builder.graph_manager.add_user_skill.call_count == 2
 
 
 # ---------------------------------------------------------------------------

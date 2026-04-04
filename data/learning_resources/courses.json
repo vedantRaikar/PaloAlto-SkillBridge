@@ -1,55 +1,130 @@
 {
   "courses": [
     {
-      "id": "postgresqltutorial_postgresql_tutorial",
-      "title": "PostgreSQL Tutorial",
-      "provider": "postgresqltutorial",
-      "url": "https://www.postgresqltutorial.com/",
-      "instructor": "PostgreSQL Tutorial Team",
-      "duration_hours": 14.0,
-      "rating": 4.7,
-      "num_ratings": null,
-      "num_students": 500000,
-      "price": 0.0,
-      "is_free": true,
-      "level": "beginner",
-      "skills_taught": [
-        "postgres"
-      ],
-      "thumbnail_url": null,
-      "description": "Comprehensive PostgreSQL guide with query examples",
-      "curriculum_summary": null,
-      "language": "en",
-      "last_updated": null,
-      "source": "scraped",
-      "relevance_score": null,
-      "timestamp": "2026-03-19T16:08:48.850138"
-    },
-    {
-      "id": "coursera_postgresql_for_everybody",
-      "title": "PostgreSQL for Everybody",
+      "id": "coursera_learn_automation_testing_with_",
+      "title": "Learn Automation Testing with Java and Selenium Webdriver",
       "provider": "coursera",
-      "url": "https://www.coursera.org/learn/database-design-postgresql",
-      "instructor": "University of Michigan",
-      "duration_hours": 18.0,
+      "url": "https://www.coursera.org/specializations/packt-learn-automation-testing-with-java-and-selenium-webdriver",
+      "instructor": "Coursera",
+      "duration_hours": null,
       "rating": 4.6,
       "num_ratings": null,
-      "num_students": 200000,
+      "num_students": 0,
       "price": 0.0,
       "is_free": false,
-      "level": "beginner",
+      "level": "all",
       "skills_taught": [
-        "postgres"
+        "Apply Selenium Automation Testing Acr"
       ],
       "thumbnail_url": null,
-      "description": "Relational database design and PostgreSQL course",
+      "description": "Discovered from coursera for Apply Selenium Automation Testing Acr",
       "curriculum_summary": null,
       "language": "en",
       "last_updated": null,
       "source": "scraped",
       "relevance_score": null,
-      "timestamp": "2026-03-19T16:08:48.850138"
+      "timestamp": "2026-04-04T12:34:33.998095"
+    },
+    {
+      "id": "coursera_advanced_selenium_webdriver_an",
+      "title": "Advanced Selenium WebDriver and Test Automation",
+      "provider": "coursera",
+      "url": "https://www.coursera.org/learn/packt-advanced-selenium-webdriver-and-test-automation-undel",
+      "instructor": "Coursera",
+      "duration_hours": null,
+      "rating": 4.6,
+      "num_ratings": null,
+      "num_students": 0,
+      "price": 0.0,
+      "is_free": false,
+      "level": "all",
+      "skills_taught": [
+        "Apply Selenium Automation Testing Acr"
+      ],
+      "thumbnail_url": null,
+      "description": "Discovered from coursera for Apply Selenium Automation Testing Acr",
+      "curriculum_summary": null,
+      "language": "en",
+      "last_updated": null,
+      "source": "scraped",
+      "relevance_score": null,
+      "timestamp": "2026-04-04T12:34:33.998095"
+    },
+    {
+      "id": "coursera_apply_selenium_automation_test",
+      "title": "Apply Selenium Automation Testing Using C#",
+      "provider": "coursera",
+      "url": "https://www.coursera.org/learn/apply-selenium-automation-testing-using-c-sharp",
+      "instructor": "Coursera",
+      "duration_hours": null,
+      "rating": 4.6,
+      "num_ratings": null,
+      "num_students": 0,
+      "price": 0.0,
+      "is_free": false,
+      "level": "all",
+      "skills_taught": [
+        "Apply Selenium Automation Testing Acr"
+      ],
+      "thumbnail_url": null,
+      "description": "Discovered from coursera for Apply Selenium Automation Testing Acr",
+      "curriculum_summary": null,
+      "language": "en",
+      "last_updated": null,
+      "source": "scraped",
+      "relevance_score": null,
+      "timestamp": "2026-04-04T12:34:33.998095"
+    },
+    {
+      "id": "coursera_selenium_integration_with_ci/c",
+      "title": "Selenium Integration with CI/CD & Advanced Testing",
+      "provider": "coursera",
+      "url": "https://www.coursera.org/learn/packt-selenium-integration-with-ci-cd-and-advanced-testing-i99qb",
+      "instructor": "Coursera",
+      "duration_hours": null,
+      "rating": 4.6,
+      "num_ratings": null,
+      "num_students": 0,
+      "price": 0.0,
+      "is_free": false,
+      "level": "all",
+      "skills_taught": [
+        "Apply Selenium Automation Testing Acr"
+      ],
+      "thumbnail_url": null,
+      "description": "Discovered from coursera for Apply Selenium Automation Testing Acr",
+      "curriculum_summary": null,
+      "language": "en",
+      "last_updated": null,
+      "source": "scraped",
+      "relevance_score": null,
+      "timestamp": "2026-04-04T12:34:33.998095"
+    },
+    {
+      "id": "coursera_apply_selenium_webdriver_with_",
+      "title": "Apply Selenium WebDriver with Java for Web Automation",
+      "provider": "coursera",
+      "url": "https://www.coursera.org/learn/apply-selenium-webdriver-with-java-for-web-automation",
+      "instructor": "Coursera",
+      "duration_hours": null,
+      "rating": 4.6,
+      "num_ratings": null,
+      "num_students": 0,
+      "price": 0.0,
+      "is_free": false,
+      "level": "all",
+      "skills_taught": [
+        "Apply Selenium Automation Testing Acr"
+      ],
+      "thumbnail_url": null,
+      "description": "Discovered from coursera for Apply Selenium Automation Testing Acr",
+      "curriculum_summary": null,
+      "language": "en",
+      "last_updated": null,
+      "source": "scraped",
+      "relevance_score": null,
+      "timestamp": "2026-04-04T12:34:33.998095"
     }
   ],
-  "timestamp": "2026-03-19T16:08:48.850138"
+  "timestamp": "2026-04-04T12:34:34.175610"
 }

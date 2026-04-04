@@ -139,16 +139,15 @@ async def ingest_role_batch(request: RoleBatchIngestRequest):
         ))
 
     for skill_id in selected_skills:
-        if not gm.node_exists(skill_id):
-            gm.add_node(Node(
-                id=skill_id,
-                type=NodeType.SKILL,
-                title=skill_id.replace("_", " ").title(),
-                category=skill_categories.get(skill_id),
-                metadata={
-                    "source": "synthetic_batch_input"
-                }
-            ))
+        gm.ensure_skill_node(
+            skill_id,
+            category=skill_categories.get(skill_id) or "programming",
+            title=skill_id.replace("_", " ").title(),
+            metadata={
+                "source": "synthetic_batch_input"
+            },
+            enrich_resources=True,
+        )
         if not gm.graph.has_edge(role_id, skill_id):
             gm.add_edge(role_id, skill_id, LinkType.REQUIRES)
 

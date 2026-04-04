@@ -8,7 +8,7 @@ class FakeMapper:
         self.mapping = mapping
         self.calls = 0
 
-    def get_learning_path(self, skill):
+    def get_learning_path(self, skill, prefer_live=False):
         self.calls += 1
         return self.mapping.get(skill, [])
 

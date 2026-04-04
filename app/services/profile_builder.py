@@ -168,9 +168,13 @@ class ProfileBuilder:
             self.graph_manager.add_node(user_node)
         
         for skill in profile.skills:
-            if self.graph_manager.get_node(skill):
-                if not self.graph_manager.graph.has_edge(profile.id, skill):
-                    self.graph_manager.add_edge(profile.id, skill, LinkType.HAS_SKILL)
+            self.graph_manager.add_user_skill(
+                profile.id,
+                skill,
+                category="programming",
+                metadata={"source": "profile_ingestion"},
+                enrich_resources=True,
+            )
 
         self.graph_manager.save_graph()
 

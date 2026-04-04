@@ -15,12 +15,13 @@ This module fetches:
 import json
 import os
 import re
+import time
 from html import unescape
 import httpx
 from typing import Dict, List, Optional, Set
 from pathlib import Path
 from functools import lru_cache
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus, urlparse, urljoin
 
 from app.core.logger import get_logger
 
@@ -28,6 +29,34 @@ from app.core.logger import get_logger
 ONET_API_BASE = "https://api.mynextmove.org"
 ONET_TAXONOMY_CACHE = "data/knowledge_base/onet_taxonomy.json"
 ONET_SKILL_COURSES_CACHE = "data/knowledge_base/skill_course_mapping.json"
+
+OPEN_CATALOG_SOURCES = [
+    {"provider": "coursera", "base_url": "https://www.coursera.org/search?query={query}", "level": "all", "is_free": False, "source": "coursera_catalog"},
+    {"provider": "edx", "base_url": "https://www.edx.org/search?q={query}", "level": "all", "is_free": False, "source": "edx_catalog"},
+    {"provider": "mit_ocw", "base_url": "https://ocw.mit.edu/search/?q={query}", "level": "all", "is_free": True, "source": "mit_ocw"},
+    {"provider": "openlearn", "base_url": "https://www.open.edu/openlearn/free-courses/full-catalogue?filter={query}", "level": "all", "is_free": True, "source": "openlearn"},
+    {"provider": "harvard_ocw", "base_url": "https://cs50.harvard.edu/x/?q={query}", "level": "all", "is_free": True, "source": "harvard_open_courseware"},
+    {"provider": "freecodecamp", "base_url": "https://www.freecodecamp.org/news/search/?query={query}", "level": "beginner", "is_free": True, "source": "freecodecamp_catalog"},
+    {"provider": "kaggle", "base_url": "https://www.kaggle.com/learn", "level": "beginner", "is_free": True, "source": "kaggle_learn_catalog"},
+    {"provider": "github_topics", "base_url": "https://github.com/topics/{query}", "level": "all", "is_free": True, "source": "github_topics"},
+    {"provider": "awesome_lists", "base_url": "https://github.com/search?q=awesome+{query}", "level": "all", "is_free": True, "source": "awesome_lists"},
+    {"provider": "oer_commons", "base_url": "https://www.oercommons.org/search?f.search={query}", "level": "all", "is_free": True, "source": "oer_commons"},
+    {"provider": "openalex", "base_url": "https://openalex.org/works?filter=concepts.display_name.search:{query}", "level": "all", "is_free": True, "source": "openalex_education"},
+]
+
+OPEN_CATALOG_LINK_PATTERNS = {
+    "coursera": [r"/learn/", r"/professional-certificates/", r"/specializations/", r"/projects/"],
+    "edx": [r"/learn/", r"/course/", r"/certificate/", r"/xseries/"],
+    "mit_ocw": [r"/courses/"],
+    "openlearn": [r"/courses/", r"/course/"],
+    "harvard_ocw": [r"/courses/", r"/x/"],
+    "freecodecamp": [r"/learn/", r"/news/"],
+    "kaggle": [r"/learn/"],
+    "github_topics": [r"^https://github\.com/[^/]+/[^/]+$"],
+    "awesome_lists": [r"^https://github\.com/[^/]+/[^/]+$"],
+    "oer_commons": [r"/resource/", r"/courseware/", r"/courses/"],
+    "openalex": [r"/W\d+"],
+}
 
 logger = get_logger(__name__)
 
@@ -305,8 +334,11 @@ class ONetKnowledgeBase:
                     data = json.load(f)
                 if isinstance(data, dict):
                     return data
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "Failed to load live course cache",
+                    extra={"cache_path": str(cache_path), "error": str(exc)},
+                )
         return {}
 
     def _save_live_course_cache(self):
@@ -315,8 +347,11 @@ class ONetKnowledgeBase:
         try:
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(self._live_course_cache, f, indent=2)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "Failed to save live course cache",
+                extra={"cache_path": str(cache_path), "error": str(exc)},
+            )
 
     def _provider_from_url(self, url: str) -> str:
         try:
@@ -324,8 +359,149 @@ class ONetKnowledgeBase:
             if not host:
                 return "web"
             return host.split(".")[0]
-        except Exception:
+        except Exception as exc:
+            logger.debug(
+                "Failed to parse provider from URL",
+                extra={"url": url, "error": str(exc)},
+            )
             return "web"
+
+    def _is_generic_search_url(self, url: str) -> bool:
+        url_lower = (url or "").lower()
+        return any(token in url_lower for token in ["/search", "?query=", "?q=", "f.search="])
+
+    def _cache_entry_is_stale_search_only(self, cache_entry: Dict) -> bool:
+        if not isinstance(cache_entry, dict):
+            return False
+        courses = cache_entry.get("courses", [])
+        if not courses:
+            return False
+        urls = [str(c.get("url", "")) for c in courses if isinstance(c, dict)]
+        if not urls:
+            return False
+        return all(self._is_generic_search_url(url) for url in urls)
+
+    def _build_open_catalog_results(self, skill: str, max_results: int) -> List[Dict]:
+        courses: List[Dict] = []
+        query = quote_plus(skill.replace("_", " "))
+
+        for source in OPEN_CATALOG_SOURCES:
+            url = source["base_url"].format(query=query)
+            provider = source["provider"]
+            courses.append({
+                "title": f"{skill.replace('_', ' ').title()} Learning Path",
+                "provider": provider,
+                "url": url,
+                "instructor": provider.replace("_", " ").title(),
+                "duration_hours": None,
+                "level": source.get("level", "all"),
+                "is_free": source.get("is_free", True),
+                "rating": 4.6,
+                "num_students": 0,
+                "description": f"Open catalog entry for {skill.replace('_', ' ')} via {provider}",
+                "source": source.get("source", provider),
+            })
+            if len(courses) >= max_results:
+                break
+
+        return courses
+
+    def _extract_specific_course_links(self, html: str, source: Dict, max_results: int) -> List[Dict]:
+        provider = source["provider"]
+        base_url = source["base_url"]
+        patterns = OPEN_CATALOG_LINK_PATTERNS.get(provider, [])
+        links: List[Dict] = []
+        seen = set()
+
+        anchor_pattern = re.compile(
+            r'<a[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        for href, raw_title in anchor_pattern.findall(html):
+            if not href or href.startswith(("#", "javascript:", "mailto:")):
+                continue
+
+            absolute_url = href if href.startswith("http") else urljoin(base_url, href)
+            if not absolute_url.startswith("http"):
+                continue
+            if any(token in absolute_url for token in ["/search", "?query=", "?q="]):
+                continue
+
+            if patterns and not any(re.search(pattern, absolute_url, re.IGNORECASE) for pattern in patterns):
+                continue
+
+            title = unescape(re.sub(r"<[^>]+>", "", raw_title)).strip()
+            if not title or len(title) < 4 or absolute_url in seen:
+                continue
+
+            seen.add(absolute_url)
+            links.append({"title": title, "url": absolute_url})
+            if len(links) >= max_results:
+                break
+
+        return links
+
+    def _discover_open_catalog_specific_courses(self, skill: str, max_results: int) -> List[Dict]:
+        courses: List[Dict] = []
+        query = quote_plus(skill.replace("_", " "))
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+
+        try:
+            with httpx.Client(timeout=4.0, follow_redirects=True) as client:
+                for source in OPEN_CATALOG_SOURCES:
+                    if len(courses) >= max_results:
+                        break
+
+                    search_url = source["base_url"].format(query=query)
+                    provider = source["provider"]
+
+                    try:
+                        response = client.get(search_url, headers=headers)
+                        response.raise_for_status()
+                        candidates = self._extract_specific_course_links(
+                            response.text,
+                            source,
+                            max_results=max_results - len(courses),
+                        )
+
+                        for entry in candidates:
+                            courses.append({
+                                "title": entry["title"],
+                                "provider": provider,
+                                "url": entry["url"],
+                                "instructor": provider.replace("_", " ").title(),
+                                "duration_hours": None,
+                                "level": source.get("level", "all"),
+                                "is_free": source.get("is_free", True),
+                                "rating": 4.6,
+                                "num_students": 0,
+                                "description": f"Discovered from {provider} for {skill.replace('_', ' ')}",
+                                "source": source.get("source", provider),
+                            })
+
+                        if candidates:
+                            logger.info(
+                                "Discovered specific course links from source",
+                                extra={"skill": skill, "provider": provider, "count": len(candidates)},
+                            )
+                    except Exception as source_exc:
+                        logger.debug(
+                            "Open catalog source fetch/parse failed",
+                            extra={"skill": skill, "provider": provider, "url": search_url, "error": str(source_exc)},
+                        )
+        except Exception as exc:
+            logger.warning(
+                "Open catalog discovery loop failed",
+                extra={"skill": skill, "error": str(exc)},
+            )
+
+        return courses[:max_results]
 
     def discover_courses_live(self, skill: str, max_results: int = 5) -> List[Dict]:
         """Discover courses at runtime using web search, with local cache fallback."""
@@ -338,7 +514,38 @@ class ONetKnowledgeBase:
         cache_entry = self._live_course_cache.get(skill_normalized, {})
         cached_courses = cache_entry.get("courses", []) if isinstance(cache_entry, dict) else []
         if cached_courses:
-            return cached_courses[:max_results]
+            if self._cache_entry_is_stale_search_only(cache_entry):
+                logger.info(
+                    "Ignoring stale search-only cache entry",
+                    extra={"skill": skill, "source": cache_entry.get("source", "unknown"), "result_count": len(cached_courses)},
+                )
+                self._live_course_cache.pop(skill_normalized, None)
+            else:
+                logger.info(
+                    "Live course cache hit",
+                    extra={"skill": skill, "source": cache_entry.get("source", "unknown"), "result_count": len(cached_courses)},
+                )
+                return cached_courses[:max_results]
+
+        open_catalog_courses = self._discover_open_catalog_specific_courses(skill, max_results=max_results)
+        if not open_catalog_courses:
+            open_catalog_courses = self._build_open_catalog_results(skill, max_results=max_results)
+        if open_catalog_courses:
+            self._live_course_cache[skill_normalized] = {
+                "courses": open_catalog_courses,
+                "timestamp": time.time(),
+                "source": "open_catalogs",
+            }
+            self._save_live_course_cache()
+            logger.info(
+                "Using open catalog live courses",
+                extra={"skill": skill, "result_count": len(open_catalog_courses)},
+            )
+            return open_catalog_courses[:max_results]
+        logger.warning(
+            "Open catalog discovery returned no courses",
+            extra={"skill": skill, "max_results": max_results},
+        )
 
         query = f"{skill.replace('_', ' ')} online course"
         url = f"https://duckduckgo.com/html/?q={quote_plus(query)}"
@@ -386,11 +593,26 @@ class ONetKnowledgeBase:
             if courses:
                 self._live_course_cache[skill_normalized] = {
                     "courses": courses,
+                    "timestamp": time.time(),
+                    "source": "duckduckgo",
                 }
                 self._save_live_course_cache()
+                logger.info(
+                    "Using fallback live courses",
+                    extra={"skill": skill, "source": "duckduckgo", "result_count": len(courses)},
+                )
+            else:
+                logger.warning(
+                    "DuckDuckGo fallback returned no course links",
+                    extra={"skill": skill, "query": query},
+                )
 
             return courses
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "Fallback live course discovery failed",
+                extra={"skill": skill, "error": str(exc)},
+            )
             return []
     
     def _load_or_fetch_taxonomy(self):
@@ -621,13 +843,11 @@ class ONetKnowledgeBase:
         
         return related
     
-    def get_courses_for_skill(self, skill: str) -> List[Dict]:
-        """Get courses for a skill with resilient fallback ordering."""
-        import time
-        
+    def get_courses_for_skill(self, skill: str, prefer_live: bool = False) -> List[Dict]:
+        """Get courses for a skill with configurable source priority."""
         skill_normalized = self._normalize_skill(skill)
 
-        # Priority 1: Check cached live discovery results.
+        # Priority 1: Check cached mappings/results.
         cache_entry = self._live_course_cache.get(skill_normalized, {})
         if isinstance(cache_entry, dict):
             cached_courses = cache_entry.get("courses", [])
@@ -636,16 +856,16 @@ class ONetKnowledgeBase:
             if cached_courses and (time.time() - cached_timestamp) < 86400:
                 return cached_courses
 
-        # Priority 2: Try live discovery before static fallback.
-        live_courses = self.discover_courses_live(skill, max_results=5)
-        if live_courses:
-            return live_courses
-        
-        # Priority 3: Static SKILL_TO_COURSES (fallback)
+        if prefer_live:
+            live_courses = self.discover_courses_live(skill, max_results=5)
+            if live_courses:
+                return live_courses
+
+        # Priority 2: Static SKILL_TO_COURSES
         if skill_normalized in SKILL_TO_COURSES:
             return SKILL_TO_COURSES[skill_normalized]
         
-        # Priority 4: Semantic matching (partial matches)
+        # Priority 3: Semantic matching (partial matches)
         best_match = None
         best_score = 0.0
         
@@ -658,10 +878,15 @@ class ONetKnowledgeBase:
         if best_match and best_score >= 0.6:
             return SKILL_TO_COURSES[best_match]
         
-        # Priority 5: Token-based matching
+        # Priority 4: Token-based matching
         for key, courses in SKILL_TO_COURSES.items():
             if self._skills_match(skill_normalized, key):
                 return courses
+
+        # Priority 5: Live discovery providers.
+        live_courses = self.discover_courses_live(skill, max_results=5)
+        if live_courses:
+            return live_courses
         
         return []
     
@@ -687,7 +912,11 @@ class ONetKnowledgeBase:
             from app.services.similarity.semantic_matcher import get_semantic_matcher
             matcher = get_semantic_matcher()
             return matcher.skills_match(skill1, skill2)
-        except Exception:
+        except Exception as exc:
+            logger.debug(
+                "Semantic skill match failed; using lexical fallback",
+                extra={"skill1": skill1, "skill2": skill2, "error": str(exc)},
+            )
             return False
     
     def _get_similarity_score(self, skill1: str, skill2: str) -> float:
@@ -719,8 +948,11 @@ class ONetKnowledgeBase:
             emb2 = matcher.get_embedding(skill2)
             if emb1 is not None and emb2 is not None:
                 return matcher.cosine_similarity(emb1, emb2)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug(
+                "Semantic similarity scoring failed; using lexical score",
+                extra={"skill1": skill1, "skill2": skill2, "error": str(exc)},
+            )
         
         return 0.0
     
@@ -766,19 +998,19 @@ class SkillCourseMapper:
         self.onet = ONetKnowledgeBase()
         self._skill_cache = {}
     
-    def get_learning_path(self, skill: str, level: str = "beginner", refresh_live: bool = False) -> List[Dict]:
+    def get_learning_path(self, skill: str, level: str = "beginner", refresh_live: bool = False, prefer_live: bool = False) -> List[Dict]:
         """Get recommended learning path for a skill"""
         if refresh_live:
             live_courses = self.onet.discover_courses_live(skill)
             if live_courses:
                 return live_courses
 
-        courses = self.onet.get_courses_for_skill(skill)
+        courses = self.onet.get_courses_for_skill(skill, prefer_live=prefer_live)
         
         if not courses:
             related = self.onet.get_related_skills(skill)
             for rel_skill in related:
-                courses = self.onet.get_courses_for_skill(rel_skill)
+                courses = self.onet.get_courses_for_skill(rel_skill, prefer_live=prefer_live)
                 if courses:
                     break
         

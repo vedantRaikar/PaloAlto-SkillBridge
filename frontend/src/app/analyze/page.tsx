@@ -109,7 +109,7 @@ function AnalyzePageContent() {
       
       const uniqueCourses = allCourses.filter((c, i, arr) => 
         arr.findIndex(x => x.id === c.id) === i
-      ).slice(0, 12)
+      )
       
       const uniqueCerts = allCerts.filter((c, i, arr) => 
         arr.findIndex(x => x.id === c.id) === i
@@ -404,10 +404,12 @@ function AnalyzePageContent() {
                       ))}
                     </div>
                   ) : learningResources.courses.length > 0 ? (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {learningResources.courses.map((course) => (
-                        <CourseCard key={course.id} course={course} compact />
-                      ))}
+                    <div className="max-h-[70vh] overflow-y-auto pr-2">
+                      <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {learningResources.courses.map((course) => (
+                          <CourseCard key={course.id} course={course} compact />
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <p className="text-muted-foreground text-center py-8">
